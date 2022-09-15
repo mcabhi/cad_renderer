@@ -10,8 +10,6 @@ from colors import Colors, FrameColors, PanelColors, DloColors
 # ToDo:
 # 1) Fix canvas size issue
 # 2) Add arrows back
-# 4) Handle nested frames
-
 
 class SizeLabel:
     LABEL_SIZE = 20
@@ -64,16 +62,16 @@ class SizeLabel:
             if self.type == 'width':
                 self.context.show_text(f"{text}: {self.__convert_to_fraction(self.parent_panel.width)}'")
             elif self.type == 'dlo_width':
-                self.context.show_text(f"{text} DLO: {self.parent_panel.dlo_width}'")
+                self.context.show_text(f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_width)}'")
 
         elif self.type in ['height', 'dlo_height']:
             self.context.move_to(self.x2 - self.TEXT_OFFSET, self.y2 + self.TEXT_OFFSET)
             self.context.rotate(math.pi / 2)
 
             if self.type == 'height':
-                self.context.show_text(f"{text}: {self.parent_panel.height}'")
+                self.context.show_text(f"{text}: {self.__convert_to_fraction(self.parent_panel.height)}'")
             elif self.type == 'dlo_height':
-                self.context.show_text(f"{text} DLO: {self.parent_panel.dlo_height}'")
+                self.context.show_text(f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_height)}'")
 
     @property
     def context(self) -> cairo.Context:
@@ -209,7 +207,7 @@ class Panel:
 
         self.name = panel_name
 
-        self.move_direction = move_direction
+        self.move_direction = raw_params.get('move_direction')
 
         self.parent_panel = parent_panel
         self.child_panels = []
@@ -299,7 +297,6 @@ class Panel:
                 height=child_panel['height'],
                 dlo_width=child_panel['dlo_width'],
                 dlo_height=child_panel['dlo_height'],
-                move_direction=child_panel['move_direction'],
                 panel_type='panel',
                 panel_name=f"PANEL {child_panel['name'].upper()}",
                 x=self.x + x_offset,
@@ -623,7 +620,7 @@ class Canvas:
         self.context = None
         self.__surface = None
 
-    def run(self):
+    def draw(self):
         context = self.__create_context()
 
         self.__draw_frame(context)
@@ -761,15 +758,11 @@ class Canvas:
 #     ]
 # })
 
-drawer = Canvas({
-    'width': 500,
-    'height': 500,
-    'dlo_width': 500,
-    'dlo_height': 500,
-    'panel_type': 'frame',
-    'coordinates': {'x': 1, 'y': 1},
-    'frames': [
-        {
+
+
+
+# drawer = Canvas(
+{
             'panel_type': 'frame',
             'coordinates': {'x': 1, 'y': 1},
             'width': 500,
@@ -781,31 +774,51 @@ drawer = Canvas({
                     'name': 'a',
                     'panel_type': 'panel',
                     'move_direction': 'right',
-                    'width': 200,
-                    'height': 450,
-                    'dlo_width': 195,
-                    'dlo_height': 430,
-                    'coordinates': {'x': 1, 'y': 1}
+                    'width': 100,
+                    'height': 330,
+                    'dlo_width': 95,
+                    'dlo_height': 325
+                },
+                {
+                    'name': 'b',
+                    'panel_type': 'panel',
+                    'move_direction': 'right',
+                    'width': 290,
+                    'height': 330,
+                    'dlo_width': 285,
+                    'dlo_height': 310,
+                    'panels': [
+                        {
+                            'name': 'a',
+                            'panel_type': 'panel',
+                            'move_direction': 'left',
+                            'width': 285 / 2,
+                            'height': 310,
+                            'dlo_width': 285 / 2,
+                            'dlo_height': 305
+                        },
+                        {
+                            'name': 'b',
+                            'panel_type': 'panel',
+                            'move_direction': 'right',
+                            'width': 285 / 2,
+                            'height': 310,
+                            'dlo_width': 285 / 2,
+                            'dlo_height': 305
+                        }
+                    ]
+                },
+                {
+                    'name': 'c',
+                    'panel_type': 'panel',
+                    'move_direction': 'right',
+                    'width': 100,
+                    'height': 330,
+                    'dlo_width': 95,
+                    'dlo_height': 325
                 }
             ]
-        },
-        {
-            'panel_type': 'frame',
-            'width': 500,
-            'height': 10,
-            'dlo_width': 0,
-            'dlo_height': 0,
-            'coordinates': {'x': 1, 'y': 2}
-        },
-        {
-            'panel_type': 'frame',
-            'width': 500,
-            'height': 150,
-            'dlo_width': 0,
-            'dlo_height': 0,
-            'coordinates': {'x': 1, 'y': 3}
         }
-    ]
-})
-
-drawer.run()
+#         )
+#
+# drawer.draw()
