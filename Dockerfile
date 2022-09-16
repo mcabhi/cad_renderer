@@ -2,7 +2,7 @@ FROM python:3.9.14-alpine3.16
 
 USER root
 
-COPY /etc/ssl/certs/ca-certificates.crt /tmp/ca-certificates.crt
+COPY ca-certificates.crt /tmp/ca-certificates.crt
 RUN cat /tmp/ca-certificates.crt >> /etc/ssl/certs/ca-certificates.crt
 
 RUN apk update
