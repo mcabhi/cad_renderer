@@ -11,4 +11,4 @@ def index():
     filename = 'example.svg'
     return static_file(filename, root='/tmp', download=filename)
 
-run(host='0.0.0.0', port=5001)
+run(host='0.0.0.0', port=5002)
