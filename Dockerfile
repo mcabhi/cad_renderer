@@ -1,11 +1,5 @@
 FROM python:3.9.14-alpine3.16
 
-USER root
-
-COPY certs /etc/ssl/certs
-
-RUN ls /etc/ssl/certs
-
 RUN apk update
 RUN apk add --no-cache \
 # installs gcc which is required for Cairo
