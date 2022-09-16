@@ -10,3 +10,6 @@ RUN apk add --no-cache \
 COPY ./requirements.txt /var/tmp/
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r /var/tmp/requirements.txt
+
+WORKDIR /app
+
