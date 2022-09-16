@@ -4,10 +4,9 @@ services:
     build: .
     container_name: app-cad-renderer
     command: tail -f /dev/null
-    network_mode: "host"
     volumes:
       - ./:/app
-#    ports:
-#      - "5001:5001"
+    ports:
+      - "5001:5001"
     entrypoint: [ "sh", "-c", "python /app/run.py" ]
 

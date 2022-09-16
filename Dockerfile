@@ -1,5 +1,7 @@
 FROM python:3.9.14-alpine3.16
 
+RUN apk add --no-cache ca-certificates
+
 RUN apk update
 RUN apk add --no-cache \
 # installs gcc which is required for Cairo
