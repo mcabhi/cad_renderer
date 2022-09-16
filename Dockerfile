@@ -3,7 +3,7 @@ FROM python:3.9.14-alpine3.16
 RUN apk add \
   --no-cache \
   --allow-untrusted \
-  --repository http://dl-cdn.alpinelinux.org/alpine/v3.16/main \
+  --repository https://dl-cdn.alpinelinux.org/alpine/v3.16/main \
   alpine-sdk
 
 RUN apk update
