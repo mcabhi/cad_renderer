@@ -1,15 +1,12 @@
 import itertools
 import math
 from functools import cached_property
-from typing import List, Dict
+from typing import Dict
 
 import cairo
-from colors import Colors, FrameColors, PanelColors, DloColors
 
+from colors import Colors
 
-# ToDo:
-# 1) Fix canvas size issue
-# 2) Add arrows back
 
 class SizeLabel:
     LABEL_SIZE = 20
@@ -49,29 +46,12 @@ class SizeLabel:
     def _draw_text(self):
         self.context.set_font_matrix(cairo.Matrix(xx=self.TEXT_SIZE, yy=-self.TEXT_SIZE))
 
-        text = f"{self.parent_panel.name.upper()}"
+        self.context.move_to(self.text_x1, self.text_y1)
 
-        if self.parent_panel.panel_type == 'frame' and self.parent_panel.parent_panel:
-            x_position = self.parent_panel.raw_params['coordinates']['x']
-            y_position = self.parent_panel.raw_params['coordinates']['y']
-            text = f"{text} <{x_position}, {y_position}>"
-
-        if self.type in ['width', 'dlo_width']:
-            self.context.move_to(self.x2 + self.TEXT_OFFSET, self.y2 + self.TEXT_OFFSET)
-
-            if self.type == 'width':
-                self.context.show_text(f"{text}: {self.__convert_to_fraction(self.parent_panel.width)}'")
-            elif self.type == 'dlo_width':
-                self.context.show_text(f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_width)}'")
-
-        elif self.type in ['height', 'dlo_height']:
-            self.context.move_to(self.x2 - self.TEXT_OFFSET, self.y2 + self.TEXT_OFFSET)
+        if self.type in ['height', 'dlo_height']:
             self.context.rotate(math.pi / 2)
 
-            if self.type == 'height':
-                self.context.show_text(f"{text}: {self.__convert_to_fraction(self.parent_panel.height)}'")
-            elif self.type == 'dlo_height':
-                self.context.show_text(f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_height)}'")
+        self.context.show_text(self.text)
 
     @property
     def context(self) -> cairo.Context:
@@ -84,6 +64,24 @@ class SizeLabel:
 
     @cached_property
     def x1(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type == 'width':
             return self.parent_panel.x
         elif self.type == 'dlo_width':
@@ -97,6 +95,25 @@ class SizeLabel:
 
     @cached_property
     def y1(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
+
         if self.type in ['width', 'dlo_width']:
             offset = (self.parent_panel.height - self.parent_panel.dlo_height) / 2
             return self.parent_panel.y + self.parent_panel.height + self.LABEL_OFFSET - offset
@@ -108,11 +125,29 @@ class SizeLabel:
 
     @cached_property
     def x2(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type in ['width', 'dlo_width']:
             return self.x1
         elif self.type in ['height', 'dlo_height']:
             vertical_labels = [_ for _ in self.root_frame.size_labels if _.type in ['height', 'dlo_height']]
-            intersected_labels = [_ for _ in vertical_labels if self.__has_overlap([self.y2, self.y3], [_.y2, _.y3])]
+            intersected_labels = [_ for _ in vertical_labels if self.__has_overlap([self.y2, self.y3], [_.y2, max(_.y3, _.text_y2)])]
 
             if intersected_labels:
                 min_x_point = min([min(_.x2, _.x3) for _ in intersected_labels])
@@ -123,9 +158,28 @@ class SizeLabel:
 
     @cached_property
     def y2(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type in ['width', 'dlo_width']:
             horizontal_labels = [_ for _ in self.root_frame.size_labels if _.type in ['width', 'dlo_width']]
-            intersected_labels = [_ for _ in horizontal_labels if self.__has_overlap([self.x2, self.x3], [_.x2, _.x3])]
+
+            intersected_labels = [_ for _ in horizontal_labels if self.__has_overlap([self.x2, self.x3], [_.x2, max(_.x3, _.text_x2)])]
 
             if intersected_labels:
                 max_y_point = max([max(_.y2, _.y3) for _ in intersected_labels])
@@ -138,6 +192,24 @@ class SizeLabel:
 
     @cached_property
     def x3(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type == 'width':
             return self.x2 + self.parent_panel.width
         elif self.type == 'dlo_width':
@@ -147,6 +219,24 @@ class SizeLabel:
 
     @cached_property
     def y3(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type in ['width', 'dlo_width']:
             return self.y2
         elif self.type == 'height':
@@ -156,6 +246,24 @@ class SizeLabel:
 
     @cached_property
     def x4(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type in ['width', 'dlo_width']:
             return self.x3
         elif self.type in ['height', 'dlo_height']:
@@ -163,13 +271,122 @@ class SizeLabel:
 
     @cached_property
     def y4(self):
+        """
+        Example:
+
+        (X2/Y2)---------------(X3/Y3)
+        |                           |
+        |                           |
+        (X1/Y1                (X4/Y4)
+
+        OR
+
+        (X3/Y3)--------(X4/Y4)
+        |
+        |
+        |
+        |
+        |
+        (X2/Y2)--------(X1/Y1)
+        """
         if self.type in ['width', 'dlo_width']:
             return self.y1
         elif self.type in ['height', 'dlo_height']:
             return self.y3
 
+    @cached_property
+    def text(self):
+        text = f"{self.parent_panel.name.upper()}"
+
+        if self.parent_panel.panel_type == 'frame' and self.parent_panel.parent_panel:
+            x_position = self.parent_panel.raw_params['coordinates']['x']
+            y_position = self.parent_panel.raw_params['coordinates']['y']
+            text = f"{text} <{x_position}, {y_position}>"
+
+        if self.type == 'width':
+            text = f"{text}: {self.__convert_to_fraction(self.parent_panel.width)}'"
+        elif self.type == 'dlo_width':
+            text = f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_width)}'"
+        elif self.type == 'height':
+            text = f"{text}: {self.__convert_to_fraction(self.parent_panel.height)}'"
+        elif self.type == 'dlo_height':
+            text = f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_height)}'"
+
+        return text
+
+    @cached_property
+    def text_x1(self):
+        """
+        Example:
+          (X1/Y1)PANEL A: 300 1/2'(X2/Y2)
+        ----------------------------
+        |                          |
+        """
+        if self.type in ['width', 'dlo_width']:
+            return self.x2 + self.TEXT_OFFSET
+        elif self.type in ['height', 'dlo_height']:
+            return self.x2 - self.TEXT_OFFSET
+
+    @cached_property
+    def text_y1(self):
+        """
+        Example:
+            ------
+     (X2/Y2)|
+           0|
+           1|
+           :|
+           L|
+           E|
+           N|
+           A|
+           P|
+     (X1/Y1)|
+            ------
+        """
+        if self.type in ['width', 'dlo_width']:
+            return self.y2 + self.TEXT_OFFSET
+        elif self.type in ['height', 'dlo_height']:
+            return self.y2 + self.TEXT_OFFSET
+
+    @cached_property
+    def text_x2(self):
+        """
+        Example:
+          (X1/Y1)PANEL A: 300 1/2'(X2/Y2)
+        ----------------------------
+        |                          |
+        """
+        if self.type in ['width', 'dlo_width']:
+            return self.text_x1 + len(self.text) * (self.TEXT_SIZE / 2)
+        elif self.type in ['height', 'dlo_height']:
+            return self.text_x1
+
+    @cached_property
+    def text_y2(self):
+        """
+        Example:
+            ------
+     (X2/Y2)|
+           0|
+           1|
+           :|
+           L|
+           E|
+           N|
+           A|
+           P|
+     (X1/Y1)|
+            ------
+        """
+        if self.type in ['width', 'dlo_width']:
+            return self.text_y1
+        elif self.type in ['height', 'dlo_height']:
+            return self.text_y1 + len(self.text) * (self.TEXT_SIZE / 2)
+
     @staticmethod
     def __convert_to_fraction(number: float) -> str:
+        """Converts 30.5 to 30 1/2 - this is a CAD convention in engineering"""
         natural_number = int(number)
         tail_number = number - natural_number
 
@@ -181,11 +398,6 @@ class SizeLabel:
 
     @staticmethod
     def __has_overlap(interval1, interval2) -> bool:
-        # is_very_small = (interval1[1] - interval1[0]) < 100
-        #
-        # if is_very_small:
-        #     return True
-
         return bool(max(0, min(interval1[1], interval2[1]) - max(interval1[0], interval2[0])))
 
 
@@ -195,10 +407,6 @@ class Panel:
                  move_direction=None, panel_name='FRAME', raw_params=None):
         self._context = None
 
-        self.width = raw_params['width']
-        self.height = raw_params['height']
-        self.dlo_width = raw_params['dlo_width']
-        self.dlo_height = raw_params['dlo_height']
         self.x = x
         self.y = y
 
@@ -215,6 +423,22 @@ class Panel:
         self.raw_params = raw_params
 
         self._size_labels = []
+
+    @property
+    def width(self):
+        return self.raw_params['width']
+
+    @property
+    def height(self):
+        return self.raw_params['height']
+
+    @property
+    def dlo_width(self):
+        return self.raw_params['dlo_width']
+
+    @property
+    def dlo_height(self):
+        return self.raw_params['dlo_height']
 
     def _draw_frame(self):
         self.context.save()
@@ -328,6 +552,65 @@ class Panel:
             self._size_labels.append(dlo_width_label)
             self._size_labels.append(dlo_height_label)
 
+    def _draw_move_direction(self):
+        self.context.save()
+
+        arrow_angle = math.pi
+        arrow_length = 0
+        arrow_x, arrow_y = 0, 0
+
+        dlo_x_offset = (self.width - self.dlo_width) / 2
+        dlo_y_offset = (self.height - self.dlo_height) / 2
+
+        if self.move_direction == 'left':
+            arrow_angle = math.pi
+
+            arrow_x = self.x + dlo_x_offset + self.dlo_width
+            arrow_y = self.y + dlo_y_offset + self.height / 2
+
+        elif self.move_direction == 'up':
+            arrow_angle = math.pi / 2
+
+            arrow_x = self.x + dlo_x_offset + self.dlo_width / 2
+            arrow_y = self.y + dlo_y_offset
+
+        elif self.move_direction == 'down':
+            arrow_angle = - math.pi / 2
+
+            arrow_x = self.x + dlo_x_offset + self.dlo_width / 2
+            arrow_y = self.y + dlo_y_offset + self.dlo_height
+
+        elif self.move_direction == 'right':
+            arrow_angle = 0
+
+            arrow_x = self.x + dlo_x_offset
+            arrow_y = self.y + dlo_y_offset + self.height / 2
+
+        if self.move_direction in ['left', 'right']:
+            arrow_length = self.dlo_width * 0.1
+        elif self.move_direction in ['up', 'down']:
+            arrow_length = self.dlo_height * 0.1
+
+        arrowhead_angle = math.pi / 6
+        arrowhead_length = arrow_length / 2.25
+
+        self.context.set_source_rgba(0, 0, 0, 1)
+
+        self.context.move_to(arrow_x, arrow_y)  # move to center of canvas
+
+        self.context.rel_line_to(arrow_length * math.cos(arrow_angle), arrow_length * math.sin(arrow_angle))
+        self.context.rel_move_to(-arrowhead_length * math.cos(arrow_angle - arrowhead_angle),
+                                 -arrowhead_length * math.sin(arrow_angle - arrowhead_angle))
+        self.context.rel_line_to(arrowhead_length * math.cos(arrow_angle - arrowhead_angle),
+                                 arrowhead_length * math.sin(arrow_angle - arrowhead_angle))
+        self.context.rel_line_to(-arrowhead_length * math.cos(arrow_angle + arrowhead_angle),
+                                 -arrowhead_length * math.sin(arrow_angle + arrowhead_angle))
+
+        self.context.set_line_width(1)
+        self.context.stroke()
+
+        self.context.restore()
+
     def draw(self):
         if self.raw_params.get('panels', []):
             self._draw_child_panels()
@@ -349,70 +632,8 @@ class Panel:
 
             self._draw_size_labels(_type='primary')
 
-        #     if self.move_direction:
-        #         arrow_angle = math.pi
-        #         arrow_length = 0
-        #         arrow_x, arrow_y = 0, 0
-        #
-        #         if self.move_direction == 'left':
-        #             arrow_angle = math.pi
-        #
-        #             dlo_x_offset = (self.width - self.dlo_width) / 2
-        #             dlo_y_offset = (self.height - self.dlo_height) / 2
-        #
-        #             arrow_x = self.x + dlo_x_offset + self.dlo_width
-        #             arrow_y = self.y + dlo_y_offset + self.height / 2
-        #
-        #         elif self.move_direction == 'up':
-        #             arrow_angle = math.pi / 2
-        #
-        #             dlo_x_offset = (self.width - self.dlo_width) / 2
-        #             dlo_y_offset = (self.height - self.dlo_height) / 2
-        #
-        #             arrow_x = self.x + dlo_x_offset + self.dlo_width / 2
-        #             arrow_y = self.y + dlo_y_offset
-        #
-        #         elif self.move_direction == 'down':
-        #             arrow_angle = - math.pi / 2
-        #
-        #             arrow_x = self.x + dlo_x_offset + self.dlo_width / 2
-        #             arrow_y = self.y + dlo_y_offset + self.dlo_height
-        #
-        #         elif self.move_direction == 'right':
-        #             arrow_angle = 0
-        #
-        #             dlo_x_offset = (self.width - self.dlo_width) / 2
-        #             dlo_y_offset = (self.height - self.dlo_height) / 2
-        #
-        #             arrow_x = self.x + dlo_x_offset
-        #             arrow_y = self.y + dlo_y_offset + self.height / 2
-        #
-        #         if self.move_direction in ['left', 'right']:
-        #             arrow_length = self.dlo_width * 0.1
-        #         elif self.move_direction in ['up', 'down']:
-        #             arrow_length = self.dlo_height * 0.1
-        #
-        #         arrowhead_angle = math.pi / 6
-        #         arrowhead_length = arrow_length / 2.25
-        #
-        #         self.context.set_source_rgba(0, 0, 0, 1)
-        #
-        #         self.context.move_to(arrow_x, arrow_y)  # move to center of canvas
-        #
-        #         self.context.rel_line_to(arrow_length * math.cos(arrow_angle), arrow_length * math.sin(arrow_angle))
-        #         self.context.rel_move_to(-arrowhead_length * math.cos(arrow_angle - arrowhead_angle),
-        #                                  -arrowhead_length * math.sin(arrow_angle - arrowhead_angle))
-        #         self.context.rel_line_to(arrowhead_length * math.cos(arrow_angle - arrowhead_angle),
-        #                                  arrowhead_length * math.sin(arrow_angle - arrowhead_angle))
-        #         self.context.rel_line_to(-arrowhead_length * math.cos(arrow_angle + arrowhead_angle),
-        #                                  -arrowhead_length * math.sin(arrow_angle + arrowhead_angle))
-        #
-        #         self.context.set_line_width(1)
-        #         self.context.stroke()
-        #
-        # # stroke out the color and width property
-        # # self.context.stroke()
-        #
+        if self.move_direction:
+            self._draw_move_direction()
 
         return self
 
@@ -430,180 +651,6 @@ class Panel:
         self._context = context
 
         return self
-
-    # def draw_width_size(self):
-    #     label_offset = 5
-    #     label_length = 20
-    #
-    #     if self.panel_type == 'frame':
-    #         if len(self.child_panels) > 0:
-    #             label_length *= 2
-    #
-    #     dash_config = [3, 3]
-    #
-    #     self.context.set_source_rgba(0, 0, 0, 1)
-    #     self.context.set_line_width(1)
-    #     self.context.set_dash(dash_config)
-    #
-    #     if self.parent_panel:
-    #         self.context.move_to(self.x, self.parent_panel.y + self.parent_panel.height + label_offset)
-    #         self.context.line_to(self.x, self.parent_panel.y + self.parent_panel.height + label_offset + label_length)
-    #         self.context.line_to(self.x + self.width,
-    #                              self.parent_panel.y + self.parent_panel.height + label_offset + label_length)
-    #         self.context.line_to(self.x + self.width, self.parent_panel.y + self.parent_panel.height + label_offset)
-    #
-    #         self.context.set_source_rgba(0, 0, 0, 1)
-    #         self.context.set_font_size(13)
-    #
-    #         font_size = 13
-    #         mtx = cairo.Matrix(xx=font_size, yy=-font_size)
-    #         self.context.set_font_matrix(mtx)
-    #
-    #         self.context.move_to(self.x,
-    #                              self.parent_panel.y + self.parent_panel.height + label_offset + label_length + 2)
-    #         self.context.show_text(f"{self.panel_name}: {self.width}'")
-    #     else:
-    #         self.context.move_to(self.x, self.y + self.height + label_offset)
-    #         self.context.line_to(self.x, self.y + self.height + label_offset + label_length)
-    #         self.context.line_to(self.x + self.width, self.y + self.height + label_offset + label_length)
-    #         self.context.line_to(self.x + self.width, self.y + self.height + label_offset)
-    #
-    #         self.context.set_font_size(13)
-    #
-    #         font_size = 13
-    #         mtx = cairo.Matrix(xx=font_size, yy=-font_size)
-    #         self.context.set_font_matrix(mtx)
-    #
-    #         self.context.move_to(self.x,
-    #                              self.y + self.height + label_offset + label_length + 2)
-    #         self.context.show_text(f"{self.panel_name}: {self.width}'")
-    #
-    #     self.context.stroke()
-    #
-    # def draw_height_size(self):
-    #     self.context.save()
-    #
-    #     label_offset = 5
-    #     label_length = 15
-    #
-    #     if self.panel_type == 'frame':
-    #         if len(self.child_panels) > 0:
-    #             label_length *= 2
-    #
-    #     dash_config = [3, 3]
-    #
-    #     self.context.set_source_rgba(0, 0, 0, 1)
-    #     self.context.set_line_width(1)
-    #     self.context.set_dash(dash_config)
-    #
-    #     if self.parent_panel:
-    #         self.context.move_to(self.parent_panel.x - label_offset, self.y)
-    #         self.context.line_to(self.parent_panel.x - label_offset - label_length, self.y)
-    #         self.context.line_to(self.parent_panel.x - label_offset - label_length, self.y + self.height)
-    #         self.context.line_to(self.parent_panel.x - label_offset, self.y + self.height)
-    #
-    #         self.context.set_source_rgba(0, 0, 0, 1)
-    #         self.context.set_font_size(13)
-    #
-    #         font_size = 13
-    #         mtx = cairo.Matrix(xx=font_size, yy=-font_size)
-    #         self.context.set_font_matrix(mtx)
-    #
-    #         self.context.move_to(self.parent_panel.x - label_offset - label_length - 2, self.y)
-    #
-    #         self.context.rotate(math.pi / 2)
-    #         self.context.show_text(f"{self.panel_name}: {self.width}'")
-    #         # self.context.rotate(0)
-    #     else:
-    #         self.context.move_to(self.x - label_offset, self.y)
-    #         self.context.line_to(self.x - label_offset - label_length, self.y)
-    #         self.context.line_to(self.x - label_offset - label_length, self.y + self.height)
-    #         self.context.line_to(self.x - label_offset, self.y + self.height)
-    #
-    #         self.context.set_font_size(13)
-    #
-    #         font_size = 13
-    #         mtx = cairo.Matrix(xx=font_size, yy=-font_size)
-    #         self.context.set_font_matrix(mtx)
-    #
-    #         self.context.move_to(self.x - label_offset - label_length - 2, self.y)
-    #
-    #         self.context.rotate(math.pi / 2)
-    #         self.context.show_text(f"{self.panel_name}: {self.width}'")
-    #         # self.context.rotate(0)
-    #
-    #     self.context.stroke()
-    #
-    #     self.context.restore()
-    #
-    # def draw_dlo_width(self):
-    #     if not self.dlo_width or not self.dlo_height:
-    #         return
-    #
-    #     label_offset = 0
-    #     label_length = 5
-    #
-    #     dash_config = [3, 3]
-    #
-    #     self.context.set_source_rgba(0, 0, 0, 1)
-    #     self.context.set_line_width(1)
-    #     self.context.set_dash(dash_config)
-    #
-    #     dlo_x_offset = (self.width - self.dlo_width) / 2
-    #     dlo_y_offset = (self.height - self.dlo_height) / 2
-    #
-    #     self.context.move_to(self.x + dlo_x_offset, self.y + dlo_y_offset + label_offset)
-    #     self.context.line_to(self.x + dlo_x_offset, self.y + dlo_y_offset + label_offset + label_length)
-    #     self.context.line_to(self.x + dlo_x_offset + self.dlo_width,
-    #                          self.y + dlo_y_offset + label_offset + label_length)
-    #     self.context.line_to(self.x + dlo_x_offset + self.dlo_width, self.y + dlo_y_offset + label_offset)
-    #
-    #     self.context.stroke()
-    #
-    #     font_size = 13
-    #     mtx = cairo.Matrix(xx=font_size, yy=-font_size)
-    #     self.context.set_font_matrix(mtx)
-    #
-    #     self.context.move_to(self.x + dlo_x_offset, self.y + dlo_y_offset + label_offset + label_length + 2)
-    #     self.context.show_text(f"{self.panel_name}: {self.dlo_width}'")
-    #
-    # def draw_dlo_height(self):
-    #     if not self.dlo_width or not self.dlo_height:
-    #         return
-    #
-    #     self.context.save()
-    #
-    #     label_offset = 0
-    #     label_length = 5
-    #
-    #     dash_config = [3, 3]
-    #
-    #     self.context.set_source_rgba(0, 0, 0, 1)
-    #     self.context.set_line_width(1)
-    #     self.context.set_dash(dash_config)
-    #
-    #     dlo_x_offset = (self.width - self.dlo_width) / 2
-    #     dlo_y_offset = (self.height - self.dlo_height) / 2
-    #
-    #     self.context.move_to(self.x + dlo_x_offset + self.dlo_width - label_offset, self.y + dlo_y_offset)
-    #     self.context.line_to(self.x + dlo_x_offset + self.dlo_width - label_offset - label_length,
-    #                          self.y + dlo_y_offset)
-    #     self.context.line_to(self.x + dlo_x_offset + self.dlo_width - label_offset - label_length,
-    #                          self.y + dlo_y_offset + self.dlo_height)
-    #     self.context.line_to(self.x + dlo_x_offset + self.dlo_width - label_offset,
-    #                          self.y + dlo_y_offset + self.dlo_height)
-    #
-    #     self.context.stroke()
-    #
-    #     font_size = 13
-    #     mtx = cairo.Matrix(xx=font_size, yy=-font_size)
-    #     self.context.set_font_matrix(mtx)
-    #
-    #     self.context.move_to(self.x + dlo_x_offset + self.dlo_width - label_offset - 2, self.y + dlo_y_offset)
-    #
-    #     self.context.rotate(math.pi / 2)
-    #     self.context.show_text(f"{self.panel_name}: {self.dlo_height}'")
-    #     self.context.restore()
 
     @property
     def size_labels(self):
@@ -629,11 +676,14 @@ class Canvas:
 
     @property
     def svg_width(self):
-        return self.frame_width + self.frame_width * 0.5
+        value = self.frame_width + self.frame_width
+
+        return value if value > 100 else 100
 
     @property
     def svg_height(self):
-        return self.frame_height + self.frame_height * 0.5
+        value = self.frame_height + self.frame_height
+        return value if value > 100 else 100
 
     @property
     def frame_width(self):
@@ -682,143 +732,3 @@ class Canvas:
 
     def __close(self):
         self.__surface.__exit__()
-
-
-# drawer = Canvas({
-#     'width': 550.375,
-#     'height': 500,
-#     'panel_type': 'frame',
-#     'coordinates': {'x': 1, 'y': 1},
-#     'panels': [
-#         {
-#             'name': 'a',
-#             'panel_type': 'panel',
-#             'move_direction': 'right',
-#             'width': 200,
-#             'height': 450,
-#             'dlo_width': 195,
-#             'dlo_height': 430,
-#             'coordinates': {'x': 1, 'y': 1}
-#         },
-#         {
-#             'name': 'b',
-#             'panel_type': 'panel',
-#             'move_direction': 'down',
-#             'width': 250,
-#             'height': 450,
-#             'dlo_width': 245,
-#             'dlo_height': 430,
-#             'coordinates': {'x': 1, 'y': 1}
-#         },
-#         {
-#             'name': 'c',
-#             'panel_type': 'panel',
-#             'move_direction': 'down',
-#             'width': 50,
-#             'height': 450,
-#             'dlo_width': 45,
-#             'dlo_height': 430,
-#             'coordinates': {'x': 1, 'y': 1}
-#         }
-#     ]
-# })
-
-# drawer = Canvas({
-#     'width': 500,
-#     'height': 500,
-#     'dlo_width': 500,
-#     'dlo_height': 500,
-#     'panel_type': 'frame',
-#     'coordinates': {'x': 1, 'y': 1},
-#     'frames': [
-#         {
-#             'panel_type': 'frame',
-#             'width': 500,
-#             'height': 340,
-#             'dlo_width': 0,
-#             'dlo_height': 0,
-#             'coordinates': {'x': 1, 'y': 1}
-#         },
-#         {
-#             'panel_type': 'frame',
-#             'width': 500,
-#             'height': 10,
-#             'dlo_width': 0,
-#             'dlo_height': 0,
-#             'coordinates': {'x': 1, 'y': 2}
-#         },
-#         {
-#             'panel_type': 'frame',
-#             'width': 500,
-#             'height': 150,
-#             'dlo_width': 0,
-#             'dlo_height': 0,
-#             'coordinates': {'x': 1, 'y': 3}
-#         }
-#     ]
-# })
-
-
-
-
-# drawer = Canvas(
-{
-            'panel_type': 'frame',
-            'coordinates': {'x': 1, 'y': 1},
-            'width': 500,
-            'height': 340,
-            'dlo_width': 0,
-            'dlo_height': 0,
-            'panels': [
-                {
-                    'name': 'a',
-                    'panel_type': 'panel',
-                    'move_direction': 'right',
-                    'width': 100,
-                    'height': 330,
-                    'dlo_width': 95,
-                    'dlo_height': 325
-                },
-                {
-                    'name': 'b',
-                    'panel_type': 'panel',
-                    'move_direction': 'right',
-                    'width': 290,
-                    'height': 330,
-                    'dlo_width': 285,
-                    'dlo_height': 310,
-                    'panels': [
-                        {
-                            'name': 'a',
-                            'panel_type': 'panel',
-                            'move_direction': 'left',
-                            'width': 285 / 2,
-                            'height': 310,
-                            'dlo_width': 285 / 2,
-                            'dlo_height': 305
-                        },
-                        {
-                            'name': 'b',
-                            'panel_type': 'panel',
-                            'move_direction': 'right',
-                            'width': 285 / 2,
-                            'height': 310,
-                            'dlo_width': 285 / 2,
-                            'dlo_height': 305
-                        }
-                    ]
-                },
-                {
-                    'name': 'c',
-                    'panel_type': 'panel',
-                    'move_direction': 'right',
-                    'width': 100,
-                    'height': 330,
-                    'dlo_width': 95,
-                    'dlo_height': 325
-                }
-            ]
-        }
-#         )
-#
-# drawer.draw()
