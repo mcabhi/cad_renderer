@@ -1,6 +1,8 @@
 FROM python:3.9.14-alpine3.16
 
+USER root
 
+RUN apk update
 RUN apk add --no-cache \
 # installs gcc which is required for Cairo
     build-base \
