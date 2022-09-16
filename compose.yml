@@ -8,5 +8,5 @@ services:
       - ./:/app
     ports:
       - "5001:5001"
-    entrypoint: [ "sh", "-c", "python /app/run.py" ]
+#    entrypoint: [ "sh", "-c", "python /app/run.py" ]
 
