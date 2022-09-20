@@ -1,5 +1,7 @@
 import itertools
 import math
+import random
+import string
 from functools import cached_property
 from typing import Dict
 
@@ -32,6 +34,26 @@ class SizeLabel:
         self._draw_text()
         self.context.stroke()
         self.context.restore()
+
+    @cached_property
+    def text(self):
+        text = f"{self.parent_panel.name.upper()}"
+
+        if self.parent_panel.panel_type == 'frame' and self.parent_panel.parent_panel:
+            x_position = self.parent_panel.raw_params['coordinates']['x']
+            y_position = self.parent_panel.raw_params['coordinates']['y']
+            text = f"{text} <{x_position}, {y_position}>"
+
+        if self.type == 'width':
+            text = f"{text}: {self.__convert_to_fraction(self.parent_panel.width)}'"
+        elif self.type == 'dlo_width':
+            text = f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_width)}'"
+        elif self.type == 'height':
+            text = f"{text}: {self.__convert_to_fraction(self.parent_panel.height)}'"
+        elif self.type == 'dlo_height':
+            text = f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_height)}'"
+
+        return text
 
     def _draw_label(self):
         self.context.set_source_rgba(*Colors.BLACK)
@@ -295,26 +317,6 @@ class SizeLabel:
             return self.y3
 
     @cached_property
-    def text(self):
-        text = f"{self.parent_panel.name.upper()}"
-
-        if self.parent_panel.panel_type == 'frame' and self.parent_panel.parent_panel:
-            x_position = self.parent_panel.raw_params['coordinates']['x']
-            y_position = self.parent_panel.raw_params['coordinates']['y']
-            text = f"{text} <{x_position}, {y_position}>"
-
-        if self.type == 'width':
-            text = f"{text}: {self.__convert_to_fraction(self.parent_panel.width)}'"
-        elif self.type == 'dlo_width':
-            text = f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_width)}'"
-        elif self.type == 'height':
-            text = f"{text}: {self.__convert_to_fraction(self.parent_panel.height)}'"
-        elif self.type == 'dlo_height':
-            text = f"{text} DLO: {self.__convert_to_fraction(self.parent_panel.dlo_height)}'"
-
-        return text
-
-    @cached_property
     def text_x1(self):
         """
         Example:
@@ -403,25 +405,19 @@ class SizeLabel:
 
 class Panel:
 
-    def __init__(self, width, height, panel_type, dlo_width=0, dlo_height=0, x=0, y=0, parent_panel=None,
-                 move_direction=None, panel_name='FRAME', raw_params=None):
+    def __init__(self, x=0, y=0, parent_panel=None, raw_params=None):
         self._context = None
 
         self.x = x
         self.y = y
-
-        self.panel_type = panel_type
-        self.panel_name = panel_name
-
-        self.name = panel_name
-
-        self.move_direction = raw_params.get('move_direction')
-
         self.parent_panel = parent_panel
-        self.child_panels = []
-
         self.raw_params = raw_params
 
+        self.panel_type = raw_params['panel_type']
+        self.name = raw_params['name'] if raw_params['panel_type'] == 'panel' else 'frame'
+        self.move_direction = raw_params.get('move_direction')
+
+        self.child_panels = []
         self._size_labels = []
 
     @property
@@ -491,9 +487,6 @@ class Panel:
 
             for raw_frame in _frames:
                 frame = Panel(
-                    panel_type='frame',
-                    width=raw_frame['width'],
-                    height=raw_frame['height'],
                     x=x1,
                     y=y1,
                     parent_panel=self,
@@ -517,12 +510,6 @@ class Panel:
                 x_offset += previous_panel.width
 
             panel = Panel(
-                width=child_panel['width'],
-                height=child_panel['height'],
-                dlo_width=child_panel['dlo_width'],
-                dlo_height=child_panel['dlo_height'],
-                panel_type='panel',
-                panel_name=f"PANEL {child_panel['name'].upper()}",
                 x=self.x + x_offset,
                 y=self.y + y_offset,
                 parent_panel=self,
@@ -660,9 +647,11 @@ class Panel:
 
 
 class Canvas:
+    BORDER_OFFSET = 10
 
-    def __init__(self, frame: Dict):
-        self.__params = frame
+    def __init__(self, raw_params: Dict):
+        self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
+        self.raw_params = raw_params
 
         self.context = None
         self.__surface = None
@@ -675,57 +664,95 @@ class Canvas:
         self.__close()
 
     @property
-    def svg_width(self):
-        value = self.frame_width + self.frame_width
-
-        return value if value > 100 else 100
-
-    @property
-    def svg_height(self):
-        value = self.frame_height + self.frame_height
-        return value if value > 100 else 100
-
-    @property
-    def frame_width(self):
-        return self.__params['width']
-
-    @property
-    def frame_height(self):
-        return self.__params['height']
-
-    @property
     def child_frames(self):
-        return self.__params.get('frames') or []
+        return self.raw_params.get('frames') or []
 
     @property
     def child_panels(self):
-        return self.__params.get('panels') or []
+        return self.raw_params.get('panels') or []
+
+    @property
+    def frame_width(self):
+        return self.raw_params['width']
+
+    @property
+    def frame_height(self):
+        return self.raw_params['height']
+
+    @property
+    def labeled_frame_width(self):
+        LABELS_PER_FRAME = 1
+        LABELS_PER_PANEL = 2
+        TOTAL_LABEL_SIZE = SizeLabel.LABEL_OFFSET + SizeLabel.LABEL_SIZE + \
+                           SizeLabel.TEXT_SIZE
+
+        if self.child_frames:
+            max_row_position = max([_['coordinates']['x'] for _ in self.child_frames])
+            labels_length =  TOTAL_LABEL_SIZE * LABELS_PER_FRAME * max_row_position
+        elif self.child_panels:
+            labels_length = TOTAL_LABEL_SIZE * LABELS_PER_PANEL * len(self.child_panels)
+        else:
+            if self.raw_params['panel_type'] == 'frame':
+                labels_length = TOTAL_LABEL_SIZE * LABELS_PER_FRAME * 1
+            else:
+                labels_length = TOTAL_LABEL_SIZE * LABELS_PER_PANEL * 1
+
+        return self.frame_width + labels_length
+
+    @property
+    def labeled_frame_height(self):
+        LABELS_PER_FRAME = 1
+        LABELS_PER_PANEL = 2
+        TOTAL_LABEL_SIZE = SizeLabel.LABEL_OFFSET + SizeLabel.LABEL_SIZE + \
+                        SizeLabel.TEXT_SIZE
+
+        if self.child_frames:
+            max_column_position = max([_['coordinates']['y'] for _ in self.child_frames])
+            labels_length = TOTAL_LABEL_SIZE * LABELS_PER_FRAME * max_column_position
+        elif self.child_panels:
+            labels_length = TOTAL_LABEL_SIZE * LABELS_PER_PANEL
+        else:
+            if self.raw_params['panel_type'] == 'frame':
+                labels_length = TOTAL_LABEL_SIZE * LABELS_PER_FRAME * 1
+            else:
+                labels_length = TOTAL_LABEL_SIZE * LABELS_PER_PANEL * 1
+
+        return self.frame_height + labels_length
+
+    @property
+    def canvas_width(self):
+
+        return self.labeled_frame_width + self.BORDER_OFFSET
+
+    @property
+    def canvas_height(self):
+        return self.labeled_frame_height + self.BORDER_OFFSET
 
     def __create_context(self):
         """
         Creates a context to draw onto
         :return: context
         """
-        self.__surface = cairo.SVGSurface("/tmp/example.svg", self.svg_width, self.svg_height)
+        self.__surface = cairo.SVGSurface(self.filename, self.canvas_width, self.canvas_height)
 
         context = cairo.Context(self.__surface)
         context.set_source_rgba(*Colors.WHITE)
         context.paint()
 
-        matrix = cairo.Matrix(yy=-1, y0=self.svg_height)
+        matrix = cairo.Matrix(yy=-1, y0=self.canvas_height)
         context.transform(matrix)
 
         return context
 
     def __draw_frame(self, context):
+        horizontal_border_offset = (self.canvas_width - self.labeled_frame_width) / 2
+        horizontal_labels_length = self.labeled_frame_width - self.frame_width
+
         initial_frame = Panel(
-            width=self.frame_width,
-            height=self.frame_height,
-            panel_type='frame',
-            x=(self.svg_width - self.frame_width) / 2,
-            y=(self.svg_height - self.frame_height) / 2,
+            x=horizontal_border_offset + horizontal_labels_length,
+            y=(self.canvas_height - self.labeled_frame_height) / 2,
             parent_panel=None,
-            raw_params=self.__params
+            raw_params=self.raw_params
         ).set_context(context)
 
         initial_frame.draw()
