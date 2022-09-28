@@ -29,19 +29,16 @@ class SizeLabel:
         self.type = label_type
 
     def draw(self):
-        self.context.save()
         self._draw_label()
         self._draw_text()
-        self.context.stroke()
-        self.context.restore()
 
     @cached_property
     def text(self):
         text = f"{self.parent_panel.name.upper()}"
 
         if self.parent_panel.panel_type == 'frame' and self.parent_panel.parent_panel:
-            x_position = self.parent_panel.raw_params['coordinates']['x']
-            y_position = self.parent_panel.raw_params['coordinates']['y']
+            x_position = int(self.parent_panel.raw_params['coordinates']['x'])
+            y_position = int(self.parent_panel.raw_params['coordinates']['y'])
             text = f"{text} <{x_position}, {y_position}>"
 
         if self.type == 'width':
@@ -56,7 +53,8 @@ class SizeLabel:
         return text
 
     def _draw_label(self):
-        self.context.set_source_rgba(*Colors.BLACK)
+        self.context.save()
+        self.context.set_source_rgba(*Colors.LIGHT_GREY)
         self.context.set_line_width(self.STROKE_WIDTH)
         self.context.set_dash(self.STROKE_FORMAT)
 
@@ -64,8 +62,12 @@ class SizeLabel:
         self.context.line_to(self.x2, self.y2)
         self.context.line_to(self.x3, self.y3)
         self.context.line_to(self.x4, self.y4)
+        self.context.stroke()
+        self.context.restore()
 
     def _draw_text(self):
+        self.context.save()
+        self.context.set_source_rgba(*Colors.BLACK)
         self.context.set_font_matrix(cairo.Matrix(xx=self.TEXT_SIZE, yy=-self.TEXT_SIZE))
 
         self.context.move_to(self.text_x1, self.text_y1)
@@ -74,6 +76,7 @@ class SizeLabel:
             self.context.rotate(math.pi / 2)
 
         self.context.show_text(self.text)
+        self.context.restore()
 
     @property
     def context(self) -> cairo.Context:
@@ -387,13 +390,14 @@ class SizeLabel:
             return self.text_y1 + len(self.text) * (self.TEXT_SIZE / 2)
 
     @staticmethod
-    def __convert_to_fraction(number: float) -> str:
+    def __convert_to_fraction(original_number: float) -> str:
         """Converts 30.5 to 30 1/2 - this is a CAD convention in engineering"""
-        natural_number = int(number)
-        tail_number = number - natural_number
+        rounded_number = round(original_number * 16) / 16
+        natural_number = int(original_number)
+        tail_number = rounded_number - natural_number
 
         if tail_number == 0:
-            return str(number)
+            return str(natural_number)
         else:
             fraction = tail_number.as_integer_ratio()
             return f"{natural_number} {fraction[0]}/{fraction[1]}"
@@ -683,14 +687,16 @@ class Canvas:
     def labeled_frame_width(self):
         LABELS_PER_FRAME = 1
         LABELS_PER_PANEL = 2
-        TOTAL_LABEL_SIZE = SizeLabel.LABEL_OFFSET + SizeLabel.LABEL_SIZE + \
-                           SizeLabel.TEXT_SIZE
+        TOTAL_LABEL_SIZE = (SizeLabel.LABEL_SIZE * 1.5) + (SizeLabel.TEXT_SIZE / 2)
 
         if self.child_frames:
-            max_row_position = max([_['coordinates']['x'] for _ in self.child_frames])
+            max_row_position = max([_['coordinates']['x'] for _ in self.child_frames]) + 1 # plus parent frame
             labels_length =  TOTAL_LABEL_SIZE * LABELS_PER_FRAME * max_row_position
         elif self.child_panels:
-            labels_length = TOTAL_LABEL_SIZE * LABELS_PER_PANEL * len(self.child_panels)
+            relates_to_frame = TOTAL_LABEL_SIZE * LABELS_PER_FRAME
+            relates_to_panels = TOTAL_LABEL_SIZE * LABELS_PER_PANEL * len(self.child_panels)
+
+            labels_length = relates_to_frame + relates_to_panels
         else:
             if self.raw_params['panel_type'] == 'frame':
                 labels_length = TOTAL_LABEL_SIZE * LABELS_PER_FRAME * 1
@@ -703,14 +709,16 @@ class Canvas:
     def labeled_frame_height(self):
         LABELS_PER_FRAME = 1
         LABELS_PER_PANEL = 2
-        TOTAL_LABEL_SIZE = SizeLabel.LABEL_OFFSET + SizeLabel.LABEL_SIZE + \
-                        SizeLabel.TEXT_SIZE
+        TOTAL_LABEL_SIZE = (SizeLabel.LABEL_SIZE * 1.5) + (SizeLabel.TEXT_SIZE / 2)
 
         if self.child_frames:
-            max_column_position = max([_['coordinates']['y'] for _ in self.child_frames])
+            max_column_position = max([_['coordinates']['y'] for _ in self.child_frames]) + 1 # plus parent frame
             labels_length = TOTAL_LABEL_SIZE * LABELS_PER_FRAME * max_column_position
         elif self.child_panels:
-            labels_length = TOTAL_LABEL_SIZE * LABELS_PER_PANEL
+            relates_to_frame = TOTAL_LABEL_SIZE * LABELS_PER_FRAME
+            relates_to_panels = TOTAL_LABEL_SIZE * LABELS_PER_PANEL * 1
+
+            labels_length = relates_to_frame + relates_to_panels
         else:
             if self.raw_params['panel_type'] == 'frame':
                 labels_length = TOTAL_LABEL_SIZE * LABELS_PER_FRAME * 1
@@ -721,7 +729,6 @@ class Canvas:
 
     @property
     def canvas_width(self):
-
         return self.labeled_frame_width + self.BORDER_OFFSET
 
     @property
