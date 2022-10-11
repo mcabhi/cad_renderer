@@ -518,15 +518,34 @@ class Panel:
             y1 += max([_['height'] * self.SCALE_FACTOR for _ in _frames])
 
     def _draw_child_panels(self):
-        total_child_width = sum([_['width'] for _ in self.raw_params.get('panels', [])]) * self.SCALE_FACTOR
-        x_offset = (self.scaled_width - total_child_width) / 2
+        child_panels = self.raw_params.get('panels', [])
+
+        total_child_width = sum([_['width'] for _ in child_panels]) * self.SCALE_FACTOR
+        total_child_height = sum([_['height'] for _ in child_panels]) * self.SCALE_FACTOR
+
+        delta__width_w_child_total = abs(self.scaled_width - total_child_width)
+        delta__width_w_child_first = abs(self.scaled_width - child_panels[0]['width'] * self.SCALE_FACTOR)
+
+        orientation = 'horizontal' if delta__width_w_child_total < delta__width_w_child_first else 'vertical'
+
+        x_offset, y_offset = 0, 0
+        if orientation == 'horizontal':
+            x_offset = (self.scaled_width - total_child_width) / 2
+        else:
+            y_offset = (self.scaled_height - total_child_height) / 2
 
         previous_panel = None
-        for child_panel in self.raw_params.get('panels', []):
-            y_offset = (self.scaled_height - child_panel['height'] * self.SCALE_FACTOR) / 2
+        for child_panel in child_panels:
+            if orientation == 'horizontal':
+                y_offset = (self.scaled_height - child_panel['height'] * self.SCALE_FACTOR) / 2
+            elif orientation == 'vertical':
+                x_offset = (self.scaled_width - child_panel['width'] * self.SCALE_FACTOR) / 2
 
             if previous_panel:
-                x_offset += previous_panel.scaled_width
+                if orientation == 'horizontal':
+                    x_offset += previous_panel.scaled_width
+                elif orientation == 'vertical':
+                    y_offset += previous_panel.scaled_height
 
             panel = Panel(
                 x=self.x + x_offset,
@@ -707,7 +726,10 @@ class Canvas:
         if self.child_frames:
             num_of_child_labels = max([_['coordinates']['x'] for _ in self.child_frames]) * Panel.LABELS_PER_FRAME
         elif self.child_panels:
-            num_of_child_labels = len(self.child_panels) * Panel.LABELS_PER_PANEL
+            if self.orientation == 'horizontal':
+                num_of_child_labels = len(self.child_panels) * Panel.LABELS_PER_PANEL
+            else:
+                num_of_child_labels = Panel.LABELS_PER_PANEL
         else:
             num_of_child_labels = 0
 
@@ -719,11 +741,14 @@ class Canvas:
         return SizeLabel.LABEL_OFFSET + length_of_first_text + total_length_of_labels
 
     @cached_property
-    def top_positioned_labels_width(self):
+    def top_positioned_labels_height(self):
         if self.child_frames:
             num_of_child_labels = max([_['coordinates']['y'] for _ in self.child_frames]) * Panel.LABELS_PER_FRAME
         elif self.child_panels:
-            num_of_child_labels = Panel.LABELS_PER_PANEL
+            if self.orientation == 'horizontal':
+                num_of_child_labels = Panel.LABELS_PER_PANEL
+            else:
+                num_of_child_labels = len(self.child_panels) * Panel.LABELS_PER_PANEL
         else:
             num_of_child_labels = 0
 
@@ -748,7 +773,7 @@ class Canvas:
     
     @cached_property
     def scaled_framed_height_with_labels(self):
-        return self.scaled_frame_height + self.top_positioned_labels_width
+        return self.scaled_frame_height + self.top_positioned_labels_height
 
     @cached_property
     def canvas_width(self):
@@ -757,6 +782,18 @@ class Canvas:
     @cached_property
     def canvas_height(self):
         return self.scaled_framed_height_with_labels + self.BORDER_OFFSET * 2
+
+    @cached_property
+    def orientation(self):
+        if self.child_panels:
+            total_child_width = sum([_['width'] for _ in self.child_panels])
+
+            delta__width_w_child_total = abs(self.frame_width - total_child_width)
+            delta__width_w_child_first = abs(self.frame_width - self.child_panels[0]['width'])
+
+            return 'horizontal' if delta__width_w_child_total < delta__width_w_child_first else 'vertical'
+        else:
+            return 'horizontal'
 
     def __create_context(self):
         """
