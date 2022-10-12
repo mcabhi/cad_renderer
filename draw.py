@@ -395,7 +395,12 @@ class SizeLabel:
             return str(natural_number)
         else:
             fraction = tail_number.as_integer_ratio()
-            return f"{natural_number} {fraction[0]}/{fraction[1]}"
+
+            # in some cases, fraction is 1 / 1
+            if fraction[1] == 1:
+                return f"{natural_number + fraction[0]}"
+            else:
+                return f"{natural_number} {fraction[0]}/{fraction[1]}"
 
     @staticmethod
     def __has_overlap(interval1, interval2) -> bool:
@@ -523,10 +528,7 @@ class Panel:
         total_child_width = sum([_['width'] for _ in child_panels]) * self.SCALE_FACTOR
         total_child_height = sum([_['height'] for _ in child_panels]) * self.SCALE_FACTOR
 
-        delta__width_w_child_total = abs(self.scaled_width - total_child_width)
-        delta__width_w_child_first = abs(self.scaled_width - child_panels[0]['width'] * self.SCALE_FACTOR)
-
-        orientation = 'horizontal' if delta__width_w_child_total < delta__width_w_child_first else 'vertical'
+        orientation = self.guess_orientation(self.width, self.height, child_panels)
 
         x_offset, y_offset = 0, 0
         if orientation == 'horizontal':
@@ -636,6 +638,29 @@ class Panel:
 
         self.context.restore()
 
+    @classmethod
+    def guess_orientation(cls, frame_width, frame_height, child_panels):
+        # this logic determines if the panel layout is vertical or horizontal
+        total_child_width = sum([_['width'] for _ in child_panels])
+        total_child_height = sum([_['height'] for _ in child_panels])
+
+        delta__width_w_child_total = abs(frame_width - total_child_width)
+        delta__height_w_child_total = abs(frame_height - total_child_height)
+        delta__width_w_child_max = abs(frame_width - max([_['width'] for _ in child_panels]))
+        delta__height_w_child_max = abs(frame_height - max([_['height'] for _ in child_panels]))
+
+        meta_delta__width = abs(delta__width_w_child_total - delta__width_w_child_max)
+        meta_delta__height = abs(delta__height_w_child_total - delta__height_w_child_max)
+
+        if meta_delta__width > meta_delta__height:
+            # width has a bigger sparse so this criteria suits better to guess the orientation
+            orientation = 'horizontal' if delta__width_w_child_total < delta__width_w_child_max else 'vertical'
+        else:
+            # height has a bigger sparse so this criteria suits better to guess the orientation
+            orientation = 'vertical' if delta__height_w_child_total < delta__height_w_child_max else 'horizontal'
+
+        return orientation
+
     def draw(self):
         if self.raw_params.get('panels', []):
             self._draw_child_panels()
@@ -685,7 +710,7 @@ class Panel:
 
 
 class Canvas:
-    BORDER_OFFSET = 10
+    BORDER_LEFT_OFFSET, BORDER_RIGHT_OFFSET, BORDER_TOP_OFFSET, BORDER_BOTTOM_OFFSET = 10, 30, 10, 10
 
     def __init__(self, raw_params: Dict):
         self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
@@ -777,21 +802,16 @@ class Canvas:
 
     @cached_property
     def canvas_width(self):
-        return self.scaled_framed_width_with_labels + self.BORDER_OFFSET * 2
+        return self.scaled_framed_width_with_labels + self.BORDER_LEFT_OFFSET + self.BORDER_RIGHT_OFFSET
 
     @cached_property
     def canvas_height(self):
-        return self.scaled_framed_height_with_labels + self.BORDER_OFFSET * 2
+        return self.scaled_framed_height_with_labels + self.BORDER_TOP_OFFSET + self.BORDER_BOTTOM_OFFSET
 
     @cached_property
     def orientation(self):
         if self.child_panels:
-            total_child_width = sum([_['width'] for _ in self.child_panels])
-
-            delta__width_w_child_total = abs(self.frame_width - total_child_width)
-            delta__width_w_child_first = abs(self.frame_width - self.child_panels[0]['width'])
-
-            return 'horizontal' if delta__width_w_child_total < delta__width_w_child_first else 'vertical'
+            return Panel.guess_orientation(self.frame_width, self.frame_height, self.child_panels)
         else:
             return 'horizontal'
 
@@ -813,8 +833,8 @@ class Canvas:
 
     def __draw_frame(self, context):
         initial_frame = Panel(
-            x=self.BORDER_OFFSET + self.left_positioned_labels_width,
-            y=self.BORDER_OFFSET,
+            x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
+            y=self.BORDER_BOTTOM_OFFSET,
             parent_panel=None,
             raw_params=self.raw_params
         ).set_context(context)
