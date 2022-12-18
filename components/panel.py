@@ -69,6 +69,21 @@ class Panel:
     def raw_child_frames(self):
         return self.raw_params.get('frames') or []
 
+    def get_normalized_child_frame(self, raw_frame):
+        from services.normalization_service import NormalizationService
+
+        siblings = [_ for _ in self.raw_child_frames if raw_frame['coordinates']['y'] == _['coordinates']['y']]
+
+        scaled_total_child_width = sum([_['width'] * self.SCALE_FACTOR for _ in siblings])
+
+        if self.scaled_width < scaled_total_child_width:
+            factor = self.scaled_width / scaled_total_child_width
+            service = NormalizationService(width_factor=factor, height_factor=1)
+
+            return service.run(deepcopy(raw_frame))
+        else:
+            return raw_frame
+
     def get_normalized_child_panel(self, raw_panel):
         from services.normalization_service import NormalizationService
 
@@ -148,7 +163,9 @@ class Panel:
         for row, _frames in row__w__frames.items():
             x1 = self.x + initial_x_offset
 
-            for raw_frame in _frames:
+            normalized_raw_frames = [self.get_normalized_child_frame(raw_frame=_) for _ in _frames]
+
+            for raw_frame in normalized_raw_frames:
                 frame = Panel(
                     x=x1,
                     y=y1,
@@ -166,15 +183,6 @@ class Panel:
 
         scaled_total_normalized_child_width = sum([_['width'] * self.SCALE_FACTOR for _ in normalized_raw_child_panels])
         scaled_total_normalized_child_height = sum([_['height'] * self.SCALE_FACTOR for _ in normalized_raw_child_panels])
-
-        # print('Scaled width: ' + str(self.scaled_width))
-        # print('Scaled height: ' + str(self.scaled_height))
-        # print('TTL child width: ' + str(scaled_total_child_width))
-        # print('TTL child height: ' + str(scaled_total_child_height))
-        # print('DIFF 1: ' + str(scaled_total_child_width - self.scaled_width))
-        # print('DIFF 2: ' + str(scaled_total_child_height - self.scaled_height))
-        # if self.scaled_width < scaled_total_child_width:
-        #     self._scale_child_panels()
 
         x_offset, y_offset = 0, 0
         if self.child_panels_layout == 'horizontal':
