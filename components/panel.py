@@ -191,7 +191,7 @@ class Panel:
             y_offset = (self.scaled_height - scaled_total_normalized_child_height) / 2
 
         previous_panel = None
-        for normalized_child_panel in sorted(normalized_raw_child_panels, key=lambda _: _['name'], reverse=True):
+        for normalized_child_panel in sorted(normalized_raw_child_panels, key=lambda _: _['name'], reverse=self.child_panels_layout == 'vertical'):
             if self.child_panels_layout == 'horizontal':
                 y_offset = (self.scaled_height - normalized_child_panel['height'] * self.SCALE_FACTOR) / 2
             elif self.child_panels_layout == 'vertical':

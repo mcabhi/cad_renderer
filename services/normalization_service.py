@@ -17,10 +17,14 @@ class NormalizationService:
         return raw_panel
 
     def _normalize(self, raw_panel: Dict) -> None:
+        raw_panel['original_width'] = raw_panel['width']
+        raw_panel['original_height'] = raw_panel['height']
         raw_panel['width'] = raw_panel['width'] * self.width_factor
         raw_panel['height'] = raw_panel['height'] * self.height_factor
 
         if raw_panel['panel_type'] == 'panel':
+            raw_panel['original_dlo_width'] = raw_panel['dlo_width']
+            raw_panel['original_dlo_height'] = raw_panel['dlo_height']
             raw_panel['dlo_width'] = raw_panel['dlo_width'] * self.width_factor
             raw_panel['dlo_height'] = raw_panel['dlo_height'] * self.height_factor
 
