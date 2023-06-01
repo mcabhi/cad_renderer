@@ -5,6 +5,8 @@ from typing import Dict
 
 import cairo
 
+from components.panel import Panel
+from components.shapes.half_circle import HalfCircle
 from enums.colors import Colors
 
 
@@ -21,7 +23,14 @@ class Canvas:
     def draw(self):
         self.context = self.__create_context()
 
-        self.__draw_frame(self.context)
+        if self.raw_params.get('shape', None):
+            hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                            draw_label=self.raw_params.get('draw_label', True))
+            hc.set_context(self.context)
+            hc.draw_shape()
+        else:
+            self.__draw_frame(self.context)
 
         self.__close()
 
