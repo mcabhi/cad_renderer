@@ -40,7 +40,7 @@ class ShapeLabel:
             y_position = int(self.panel.raw_params['coordinates']['y'])
             text = f"{text} <{x_position}, {y_position}>"
 
-        label_width = self.panel.raw_params.get('original_width') or self.panel.raw_params['width']
+        label_width = self.panel.raw_params.get('original_width') or self.panel.width
         label_height = self.panel.raw_params.get('original_height') or self.panel.raw_params['height']
         label_dlo_width = self.panel.raw_params.get('original_dlo_width') or self.panel.raw_params['dlo_width']
         label_dlo_height = self.panel.raw_params.get('original_dlo_height') or self.panel.raw_params['dlo_height']
