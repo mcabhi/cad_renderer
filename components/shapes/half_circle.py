@@ -25,7 +25,10 @@ class HalfCircle:
 
     @property
     def width(self):
-        return self.raw_params['width']
+        if self.raw_params.get('height_width_2x', True):
+            return self.height * 2
+        else:
+            return self.raw_params['width']
 
     @property
     def height(self):
@@ -41,7 +44,10 @@ class HalfCircle:
 
     @property
     def scaled_width(self):
-        return self.width * self.scale_factor
+        if self.raw_params.get('height_width_2x', True):
+            return self.scaled_height * 2
+        else:
+            return self.width * self.scale_factor
 
     @property
     def scaled_height(self):
@@ -251,7 +257,7 @@ class HalfCircle:
             self._size_labels.append(height_label)
 
         for panel in self.raw_params['panels']:
-            x_offset = (self.scaled_width - panel['width'] * self.scale_factor) / 2
+            x_offset = (self.scaled_height - panel['height'] * self.scale_factor)
             y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
 
             child_panel = HalfCircle(x=self.x + x_offset, y=self.y + x_offset,
@@ -266,10 +272,10 @@ class HalfCircle:
             self.name = panel['name'] if panel['panel_type'] == 'panel' else 'frame'
 
             # in case of inner panels, half circle is cur at the base, find the start angle for that
-            radius = self.scaled_width / 2
+            radius = self.scaled_height
             start_angle = math.asin(x_offset / radius)
 
-            self.draw_half_circle(center_x=self.x + self.scaled_width / 2 + x_offset,
+            self.draw_half_circle(center_x=self.x + self.scaled_height + x_offset,
                                   center_y=self.y,
                                   radius=radius,
                                   thickness=1,
@@ -278,7 +284,7 @@ class HalfCircle:
             # draw muntins
             pattern_name = self.raw_params.get('muntin_pattern', None)
             if pattern_name:
-                self.draw_muntin(pattern_name, radius, (self.x + self.scaled_width / 2 + x_offset, self.y), x_offset)
+                self.draw_muntin(pattern_name, radius, (self.x + self.scaled_height + x_offset, self.y), x_offset)
 
             self.x = self.x + x_offset
             self.y = self.y + x_offset
