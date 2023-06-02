@@ -7,6 +7,7 @@ import cairo
 
 from components.panel import Panel
 from components.shapes.half_circle import HalfCircle
+from components.shapes.circle import Circle
 from enums.colors import Colors
 
 
@@ -22,16 +23,21 @@ class Canvas:
 
     def draw(self):
         self.context = self.__create_context()
-
-        if self.raw_params.get('shape', None):
+        shape = self.raw_params.get('shape')
+        if shape is None:
+            self.__draw_frame(self.context)
+        elif shape == 'half circle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
                             raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
                             draw_label=self.raw_params.get('draw_label', True))
             hc.set_context(self.context)
             hc.draw_shape()
-        else:
-            self.__draw_frame(self.context)
-
+        elif shape == 'circle':
+            c = Circle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                            draw_label=self.raw_params.get('draw_label', True))
+            c.set_context(self.context)
+            c.draw_shape()
         self.__close()
 
     @cached_property
