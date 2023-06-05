@@ -86,10 +86,10 @@ class Circle:
 
 
     def draw_shape(self):
-        # draw frame
+        # draw frame    
         outer_radius = self.scaled_width / 2
         self.draw_circle(center_x=self.x + self.scaled_width / 2, center_y=self.y  + self.scaled_height / 2, radius=outer_radius,
-                              thickness=2)
+                              thickness=1)
 
         if self.draw_label:
             width_label_cords = {
