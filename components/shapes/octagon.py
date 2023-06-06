@@ -21,6 +21,7 @@ class Octagon:
         self.scale_factor = scale_factor
         self._size_labels = []
         self.child_labels = []
+        self.vertices = [] 
 
     @property
     def width(self):
@@ -81,18 +82,18 @@ class Octagon:
         angle = 2 * math.pi / 8  # Angle between adjacent sides of the octagon
 
         # Calculate the coordinates of the octagon vertices
-        vertices = []
+        self.vertices = []
         for i in range(8):
-            x = center_x + side_length * math.cos(i * angle)
-            y = center_y + side_length * math.sin(i * angle)
-            vertices.append((x, y))
+            x = center_x + side_length * math.cos(i * angle + math.pi / 8)
+            y = center_y + side_length * math.sin(i * angle + math.pi / 8)
+            self.vertices.append((x, y))
 
         # Move to the first vertex
-        self.context.move_to(*vertices[0])
+        self.context.move_to(*self.vertices[0])
 
         # Draw lines to connect the vertices
         for i in range(1, 8):
-            self.context.line_to(*vertices[i])
+            self.context.line_to(*self.vertices[i])
 
         # Close the path
         self.context.close_path()
@@ -102,32 +103,32 @@ class Octagon:
 
     def draw_shape(self):
         # Draw frame
-        outer_side_length = self.scaled_width / 2
+        outer_side_length =  self.scaled_width / 2
         self.draw_octagon(center_x=self.x + self.scaled_width / 2, center_y=self.y + self.scaled_height / 2,
-                          side_length=outer_side_length, thickness=1)
+                          side_length=outer_side_length, thickness=2)
 
         if self.draw_label:
             width_label_cords = {
-                "x1": self.x,
+                "x1": self.vertices[3][0],
                 "y1": self.y + self.scaled_height,
-                "x2": self.x,
+                "x2": self.vertices[3][0],
                 "y2": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "x3": self.x + self.scaled_width,
+                "x3": self.vertices[0][0],
                 "y3": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "x4": self.x + self.scaled_width,
+                "x4": self.vertices[0][0],
                 "y4": self.y + self.scaled_height
             }
             width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
 
             height_label_cords = {
                 "x1": self.x,
-                "y1": self.y,
+                "y1": self.vertices[5][1],
                 "x2": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "y2": self.y,
+                "y2": self.vertices[5][1],
                 "x3": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "y3": self.y + self.scaled_height,
+                "y3": self.vertices[1][1],
                 "x4": self.x,
-                "y4": self.y + self.scaled_height
+                "y4": self.vertices[1][1]
             }
             height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
             width_label.draw()
@@ -163,26 +164,26 @@ class Octagon:
 
             if self.draw_label:
                 width_label_cords = {
-                    "x1": self.x,
+                    "x1": self.vertices[3][0],
                     "y1": self.y + self.scaled_height,
-                    "x2": self.x,
+                    "x2": self.vertices[3][0],
                     "y2": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
-                    "x3": self.x + self.scaled_width,
+                    "x3": self.vertices[0][0],
                     "y3": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
-                    "x4": self.x + self.scaled_width,
+                    "x4": self.vertices[0][0],
                     "y4": self.y + self.scaled_height
                 }
                 width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
 
                 height_label_cords = {
                     "x1": self.x,
-                    "y1": self.y,
+                    "y1": self.vertices[5][1],
                     "x2": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-                    "y2": self.y,
+                    "y2": self.vertices[5][1],
                     "x3": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-                    "y3": self.y + self.scaled_height,
+                    "y3": self.vertices[1][1],
                     "x4": self.x,
-                    "y4": self.y + self.scaled_height
+                    "y4": self.vertices[1][1],
                 }
                 height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
                 width_label.draw()
