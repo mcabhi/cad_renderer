@@ -26,7 +26,7 @@ class Canvas:
         shape = self.raw_params.get('shape')
         if shape is None:
             self.__draw_frame(self.context)
-        elif shape == 'half circle':
+        elif shape == 'halfcircle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
                             raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
                             draw_label=self.raw_params.get('draw_label', True))
