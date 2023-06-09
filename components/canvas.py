@@ -23,8 +23,8 @@ class Canvas:
 
     def draw(self):
         self.context = self.__create_context()
-        shape = self.raw_params.get('shape')
-        if shape is None:
+        shape = self.raw_params.get('shape', None)
+        if not shape:
             self.__draw_frame(self.context)
         elif shape == 'halfcircle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
