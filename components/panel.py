@@ -9,18 +9,17 @@ from enums.colors import Colors
 
 
 class Panel:
-    SCALE_FACTOR = 5
-
     LABELS_PER_FRAME = 1
     LABELS_PER_PANEL = 2
 
-    def __init__(self, x=0.0, y=0.0, parent_panel=None, raw_params=None):
+    def __init__(self, x=0.0, y=0.0, parent_panel=None, raw_params=None, scale_factor=5):
         self._context = None
 
         self.x = x
         self.y = y
         self.parent_panel = parent_panel
         self.raw_params = raw_params
+        self.SCALE_FACTOR = scale_factor
 
         self.panel_type = raw_params['panel_type']
         self.name = raw_params['name'] if raw_params['panel_type'] == 'panel' else 'frame'

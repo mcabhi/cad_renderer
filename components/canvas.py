@@ -8,6 +8,8 @@ import cairo
 from components.panel import Panel
 from components.shapes.half_circle import HalfCircle
 from components.shapes.circle import Circle
+from components.shapes.arch import Arch
+
 from enums.colors import Colors
 
 
@@ -20,6 +22,9 @@ class Canvas:
 
         self.context = None
         self.__surface = None
+        self.scale_factor = raw_params.get('scale_factor', 5)
+
+
 
     def draw(self):
         self.context = self.__create_context()
@@ -28,16 +33,22 @@ class Canvas:
             self.__draw_frame(self.context)
         elif shape == 'halfcircle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
                             draw_label=self.raw_params.get('draw_label', True))
             hc.set_context(self.context)
             hc.draw_shape()
         elif shape == 'circle':
             c = Circle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
                             draw_label=self.raw_params.get('draw_label', True))
             c.set_context(self.context)
             c.draw_shape()
+        elif shape == 'arch':
+            a = Arch(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.raw_params.get('draw_label', True))
+            a.set_context(self.context)
+            a.draw_shape()
         self.__close()
 
     @cached_property
@@ -106,13 +117,11 @@ class Canvas:
 
     @cached_property
     def scaled_frame_width(self):
-        from components.panel import Panel
-        return self.frame_width * Panel.SCALE_FACTOR
+        return self.frame_width * self.scale_factor
 
     @cached_property
     def scaled_frame_height(self):
-        from components.panel import Panel
-        return self.frame_height * Panel.SCALE_FACTOR
+        return self.frame_height * self.scale_factor
 
     @cached_property
     def scaled_framed_width_with_labels(self):
@@ -162,7 +171,8 @@ class Canvas:
             x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
             y=self.BORDER_BOTTOM_OFFSET,
             parent_panel=None,
-            raw_params=self.raw_params
+            raw_params=self.raw_params,
+            scale_factor=self.raw_params.get('scale_factor')
         ).set_context(context)
 
         initial_frame.draw()
