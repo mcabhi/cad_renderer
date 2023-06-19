@@ -8,6 +8,7 @@ import cairo
 from components.panel import Panel
 from components.shapes.half_circle import HalfCircle
 from components.shapes.circle import Circle
+from components.shapes.eyebrow import Eyebrow
 from enums.colors import Colors
 
 
@@ -38,6 +39,12 @@ class Canvas:
                             draw_label=self.raw_params.get('draw_label', True))
             c.set_context(self.context)
             c.draw_shape()
+        elif shape == 'eyebrow':
+            e = Eyebrow(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                            draw_label=self.raw_params.get('draw_label', True))
+            e.set_context(self.context)
+            e.draw_shape()
         self.__close()
 
     @cached_property
