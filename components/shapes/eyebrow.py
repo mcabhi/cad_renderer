@@ -119,25 +119,6 @@ class Eyebrow:
             x, y = touchpoint
             self.draw_line((center_x - x, center_y + y + start_offset), (center_x, center_y + start_offset), 1)
 
-    def find_arc_touch_points(self, radius, arc_width, arc_height, touch_point_count):
-        central_angle = 2 * math.asin(arc_width / (2 * radius))
-
-        # Calculate the start angle by subtracting half of the central angle from pi/2 (90 degrees)
-        start_angle = math.pi / 2 - (central_angle / 2)
-        angle_between_points = central_angle / (touch_point_count + 1)
-
-        touch_points = []
-        for i in range(touch_point_count):
-            # Calculate the angle for each touch point
-            touch_point_angle = start_angle + angle_between_points * (i + 1)
-
-            # Calculate the coordinates of each touch point
-            x = radius * math.cos(touch_point_angle)
-            y = radius * math.sin(touch_point_angle) - (radius - arc_height)
-            touch_points.append((x, y))
-
-        return touch_points
-
     def draw_muntin(self, pattern_name, radius, center, y_offset, x_offset):
         center_x, center_y = center
         if pattern_name == 'lite-4':
@@ -179,92 +160,77 @@ class Eyebrow:
                 x2, y2 = touchpoint_sun
                 self.draw_line((center_x - x1, center_y + y1 + y_offset),
                                (center_x - x2, center_y + y2 + y_offset))
-        elif pattern_name == 'colonial-2x1':
-            touch_points = [(0, self.scaled_height)]
-            self.draw_lines_center_touchpoints(center, touch_points, y_offset)
+        elif pattern_name == 'colonial':
+            # draw vertical lines
+            vertical_muntin_spacing = self.scaled_width / 3
+            half_chord_radius_diff = radius - self.scaled_width / 2
+            side_arc_height = vertical_muntin_spacing + half_chord_radius_diff
 
-        elif pattern_name == 'sunburst_through':
-            # draw sun arch
-            sun_height = self.scaled_height / 2
-            sun_width = self.scaled_width / 2
+            # calculate the chord length of side arc
+            side_arc_chord = 2 * math.sqrt(radius**2 - (radius - side_arc_height)**2)
+            mun_height = side_arc_chord / 2 - (radius - self.scaled_height)
+            self.draw_line((self.x + x_offset + self.scaled_width/3, self.y + y_offset),
+                           (self.x + x_offset + self.scaled_width/3, self.y + y_offset + mun_height))
+            self.draw_line((self.x + x_offset + self.scaled_width/3*2, self.y + y_offset),
+                           (self.x + x_offset + self.scaled_width/3*2, self.y + y_offset + mun_height))
 
-            sun_radius = (sun_width ** 2 / (8 * sun_height)) + sun_height / 2
-            center_x = self.x + (self.scaled_width + x_offset) / 2
-            center_y = self.y - (sun_radius - sun_height)
+            # draw horizontal lines
+            self.draw_line((self.x + x_offset, self.y + y_offset + self.scaled_height_2),
+                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2))
+            self.draw_line((self.x + x_offset, self.y + y_offset + self.scaled_height_2/2),
+                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2/2))
 
+        elif 'brittany_lite' in pattern_name:
+            # set brittany offset as 4
+            brittany_offset = 4 * self.scale_factor
+
+            # draw arc
+            arc_height = self.scaled_height - self.scaled_height_2
+            radius = (self.scaled_width ** 2 / (8 * arc_height)) + arc_height / 2
+            center_x = self.x + self.scaled_width / 2 + x_offset
+            center_y = self.y + self.scaled_height_2 - (radius - arc_height) + y_offset - brittany_offset
             # Calculate the central angle of the chord
-            central_angle = 2 * math.asin(sun_width / (2 * sun_radius))
-
+            central_angle = 2 * math.asin(self.scaled_width / (2 * radius))
             # Calculate the start angle by subtracting half of the central angle from pi/2 (90 degrees)
             start_angle = math.pi / 2 - (central_angle / 2)
-            self.draw_arch(center_x, center_y + y_offset, radius=sun_radius,
-                           thickness=1, start_angle=start_angle)
+            self.draw_arch(center_x=center_x, center_y=center_y, radius=radius, thickness=1, start_angle=start_angle)
 
-            # draw inclined lines
-            touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 3)
-            self.draw_lines_center_touchpoints(center, touch_points, y_offset)
+            # draw vertical lines
+            half_chord_radius_diff = radius - self.scaled_width / 2
+            side_arc_height = brittany_offset + half_chord_radius_diff
+
+            # calculate the chord length of side arc
+            side_arc_chord = 2 * math.sqrt(radius**2 - (radius - side_arc_height)**2)
+            mun_height = side_arc_chord / 2 - (radius - self.scaled_height)
+            self.draw_line((self.x + x_offset + brittany_offset, self.y + y_offset),
+                           (self.x + x_offset + brittany_offset, self.y + y_offset + mun_height))
+            self.draw_line((self.x + x_offset + self.scaled_width - brittany_offset, self.y + y_offset),
+                           (self.x + x_offset + self.scaled_width - brittany_offset, self.y + y_offset + mun_height))
+
+            if pattern_name == 'brittany_lite-9':
+                # draw horizontal line
+                self.draw_line((self.x + x_offset, self.y + y_offset + brittany_offset),
+                               (self.x + x_offset + self.scaled_width, self.y + y_offset + brittany_offset))
 
         elif pattern_name == 'sunburst':
-            # draw sun arch
-            sun_height = self.scaled_height / 2
-            sun_width = self.scaled_width / 2
-            sun_radius = (sun_width ** 2 / (8 * sun_height)) + sun_height / 2
+            # draw sun
+            radius = self.scaled_width/4
+            center_x = self.x + self.scaled_width / 2 + x_offset
+            center_y = self.y + y_offset
+            self.draw_arch(center_x, center_y, radius=radius, thickness=1)
 
-            sun_center_x = self.x + (self.scaled_width + x_offset) / 2
-            sun_center_y = self.y - (sun_radius - sun_height) + y_offset
-
-            # Calculate the central angle of the chord
-            central_angle = 2 * math.asin(sun_width / (2 * sun_radius))
-
-            # Calculate the start angle by subtracting half of the central angle from pi/2 (90 degrees)
-            start_angle = math.pi / 2 - (central_angle / 2)
-            self.draw_arch(sun_center_x, sun_center_y, radius=sun_radius,
-                           thickness=1, start_angle=start_angle)
-
-            # draw lines
-            panel_touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 3)
-            sun_touch_points = self.find_arc_touch_points(sun_radius, sun_width, sun_height, 3)
-
+            # draw sun rays
+            panel_touch_points = [(self.scaled_width/2, self.scaled_height_2),
+                                  (0, self.scaled_height),
+                                  (-self.scaled_width/2, self.scaled_height_2)]
+            y_sun = math.sin(math.pi / 4) * radius
+            sun_touch_points = [(y_sun, y_sun), (0, radius), (-y_sun, y_sun)]
             center_x, center_y = center
             for touchpoint_sun, touchpoint_panel in zip(sun_touch_points, panel_touch_points):
                 x1, y1 = touchpoint_panel
                 x2, y2 = touchpoint_sun
                 self.draw_line((center_x - x1, center_y + y1 + y_offset),
-                               (sun_center_x - x2, center_y + y2 + y_offset))
-
-        elif pattern_name == 'colonial-3x1':
-            vertical_muntin_spacing = self.scaled_width / 3
-            half_chord_radius_diff = radius - self.scaled_width / 2
-            side_arc_height = vertical_muntin_spacing + half_chord_radius_diff
-
-            # Calculate the chord length of side arc
-            side_arc_chord = 2 * math.sqrt(radius**2 - (radius - side_arc_height)**2)
-            mun_height = side_arc_chord / 2 - (radius - self.scaled_height)
-            self.draw_line((center_x - vertical_muntin_spacing/2, center_y + mun_height + y_offset),
-                           (center_x - vertical_muntin_spacing/2, center_y + y_offset))
-            self.draw_line((center_x + vertical_muntin_spacing/2, center_y + mun_height + y_offset),
-                           (center_x + vertical_muntin_spacing/2, center_y + y_offset))
-
-        elif pattern_name == 'colonial-3x2':
-            vertical_muntin_spacing = self.scaled_width / 3
-            half_chord_radius_diff = radius - self.scaled_width / 2
-            side_arc_height = vertical_muntin_spacing + half_chord_radius_diff
-
-            # Calculate the chord length of side arc
-            side_arc_chord = 2 * math.sqrt(radius**2 - (radius - side_arc_height)**2)
-            mun_height = side_arc_chord / 2 - (radius - self.scaled_height)
-
-            # draw vertical lines
-            self.draw_line((center_x - vertical_muntin_spacing/2, center_y + mun_height + y_offset),
-                           (center_x - vertical_muntin_spacing/2, center_y + y_offset))
-            self.draw_line((center_x + vertical_muntin_spacing/2, center_y + mun_height + y_offset),
-                           (center_x + vertical_muntin_spacing/2, center_y + y_offset))
-
-            # draw horizontal line
-            y = self.scaled_height/2
-            mun_length = 2 * math.sqrt(radius ** 2 - (radius - y) ** 2)
-            self.draw_line((center_x - mun_length/2, center_y + y + y_offset),
-                           (center_x + mun_length/2, center_y + y + y_offset))
+                               (center_x - x2, center_y + y2 + y_offset))
 
     def calculate_arc_parameters(self, height, width, total_width):
         radius = (width ** 2 / (8 * height)) + height / 2
@@ -281,7 +247,7 @@ class Eyebrow:
 
     def draw_shape(self):
         self.draw_line((self.x, self.y), (self.x + self.scaled_width, self.y), 2)
-        self.draw_line((self.x, self.y), (self.x, self.y + self.scaled_height_2 ), 2)
+        self.draw_line((self.x, self.y), (self.x, self.y + self.scaled_height_2), 2)
         self.draw_line((self.x + self.scaled_width, self.y),
                        (self.x + self.scaled_width, self.y + self.scaled_height_2), 2)
 
@@ -298,35 +264,35 @@ class Eyebrow:
         start_angle = math.pi / 2 - (central_angle / 2)
         self.draw_arch(center_x, center_y, radius=radius, thickness=2, start_angle=start_angle)
 
-        # if self.draw_label:
-        #     width_label_cords = {
-        #         "x1": self.x,
-        #         "y1": self.y + self.scaled_height,
-        #         "x2": self.x,
-        #         "y2": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-        #         "x3": self.x + self.scaled_width,
-        #         "y3": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-        #         "x4": self.x + self.scaled_width,
-        #         "y4": self.y + self.scaled_height
-        #     }
-        #     width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
-        #
-        #     height_label_cords = {
-        #         "x1": self.x,
-        #         "y1": self.y,
-        #         "x2": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-        #         "y2": self.y,
-        #         "x3": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-        #         "y3": self.y + self.scaled_height,
-        #         "x4": self.x,
-        #         "y4": self.y + self.scaled_height
-        #     }
-        #     height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
-        #     width_label.draw()
-        #     height_label.draw()
-        #     self._size_labels.append(width_label)
-        #     self._size_labels.append(height_label)
-        #
+        if self.draw_label:
+            width_label_cords = {
+                "x1": self.x,
+                "y1": self.y + self.scaled_height,
+                "x2": self.x,
+                "y2": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "x3": self.x + self.scaled_width,
+                "y3": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "x4": self.x + self.scaled_width,
+                "y4": self.y + self.scaled_height
+            }
+            width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
+
+            height_label_cords = {
+                "x1": self.x,
+                "y1": self.y,
+                "x2": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "y2": self.y,
+                "x3": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "y3": self.y + self.scaled_height,
+                "x4": self.x,
+                "y4": self.y + self.scaled_height
+            }
+            height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
+            width_label.draw()
+            height_label.draw()
+            self._size_labels.append(width_label)
+            self._size_labels.append(height_label)
+
         for panel in self.raw_params['panels']:
             x_offset = (self.scaled_width - panel['width'] * self.scale_factor) / 2
             y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
@@ -343,11 +309,11 @@ class Eyebrow:
             self.name = panel['name'] if panel['panel_type'] == 'panel' else 'frame'
 
             self.draw_line((self.x + x_offset, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width, self.y + y_offset), 1)
+                           (self.x + x_offset + self.scaled_width, self.y + y_offset))
             self.draw_line((self.x + x_offset, self.y + y_offset),
-                           (self.x + x_offset, self.y + y_offset + self.scaled_height_2), 1)
+                           (self.x + x_offset, self.y + y_offset + self.scaled_height_2))
             self.draw_line((self.x + x_offset + self.scaled_width, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2), 1)
+                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2))
 
             # draw arc
             arc_height = self.scaled_height - self.scaled_height_2
@@ -371,32 +337,32 @@ class Eyebrow:
             if pattern_name:
                 self.draw_muntin(pattern_name, radius, (center_x, self.y), y_offset, x_offset)
 
-            # self.x = self.x + x_offset / 2
-            # self.y = self.y + y_offset
-            #
-            # if self.draw_label:
-            #     width_label_cords = {
-            #         "x1": self.x,
-            #         "y1": self.y + self.scaled_height,
-            #         "x2": self.x,
-            #         "y2": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
-            #         "x3": self.x + self.scaled_width,
-            #         "y3": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
-            #         "x4": self.x + self.scaled_width,
-            #         "y4": self.y + self.scaled_height
-            #     }
-            #     width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
-            #
-            #     height_label_cords = {
-            #         "x1": self.x,
-            #         "y1": self.y,
-            #         "x2": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-            #         "y2": self.y,
-            #         "x3": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-            #         "y3": self.y + self.scaled_height - y_offset,
-            #         "x4": self.x,
-            #         "y4": self.y + self.scaled_height - y_offset
-            #     }
-            #     height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
-            #     width_label.draw()
-            #     height_label.draw()
+            self.x = self.x + x_offset
+            self.y = self.y + y_offset
+
+            if self.draw_label:
+                width_label_cords = {
+                    "x1": self.x,
+                    "y1": self.y + self.scaled_height,
+                    "x2": self.x,
+                    "y2": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
+                    "x3": self.x + self.scaled_width,
+                    "y3": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
+                    "x4": self.x + self.scaled_width,
+                    "y4": self.y + self.scaled_height
+                }
+                width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
+
+                height_label_cords = {
+                    "x1": self.x,
+                    "y1": self.y,
+                    "x2": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
+                    "y2": self.y,
+                    "x3": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
+                    "y3": self.y + self.scaled_height,
+                    "x4": self.x,
+                    "y4": self.y + self.scaled_height
+                }
+                height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
+                width_label.draw()
+                height_label.draw()
