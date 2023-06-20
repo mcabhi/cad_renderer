@@ -4,7 +4,6 @@ import cairo
 
 from components.shapes.shape_label import ShapeLabel
 from enums.colors import Colors
-import logging
 
 
 class Eyebrow:
@@ -89,12 +88,6 @@ class Eyebrow:
         self.context.set_line_width(thickness)
 
         self.context.arc(center_x, center_y, radius, start_angle, math.pi - start_angle)
-        #
-        # y_change = radius - self.scaled_height
-        # x_change = self.scaled_width / 2
-        #
-        # self.context.move_to(center_x - x_change, center_y + y_change)
-        # self.context.line_to(center_x + x_change, center_y + y_change)
 
         self.context.stroke()
         self.context.restore()
@@ -112,33 +105,32 @@ class Eyebrow:
         self.context.line_to(end_x, end_y)
         self.context.stroke()
 
-    def draw_lines_center_touchpoints(self, center, touchpoints, start_offset):
+    def draw_lines_center_touchpoints(self, center, touchpoints):
         """draw multiple lines for muntin patterns: from center to multiple touchpoints on the curve"""
         center_x, center_y = center
         for touchpoint in touchpoints:
             x, y = touchpoint
-            self.draw_line((center_x - x, center_y + y + start_offset), (center_x, center_y + start_offset), 1)
+            self.draw_line((center_x - x, center_y + y), (center_x, center_y), 1)
 
-    def draw_muntin(self, pattern_name, radius, center, y_offset, x_offset):
-        center_x, center_y = center
+    def draw_muntin(self, pattern_name, radius, center):
         if pattern_name == 'lite-4':
             touch_points = [(self.scaled_width/2, self.scaled_height_2),
                             (0, self.scaled_height),
                             (-self.scaled_width/2, self.scaled_height_2)]
-            self.draw_lines_center_touchpoints(center, touch_points, y_offset)
+            self.draw_lines_center_touchpoints(center, touch_points)
 
         elif pattern_name == 'alternative_design_sunburst':
             # draw sun
-            self.draw_line((self.x + x_offset + self.scaled_width/3, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width/3, self.y + y_offset + self.scaled_height_2/2))
-            self.draw_line((self.x + x_offset + self.scaled_width/3*2, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width/3*2, self.y + y_offset + self.scaled_height_2/2))
+            self.draw_line((self.x + self.scaled_width/3, self.y),
+                           (self.x + self.scaled_width/3, self.y + self.scaled_height_2/2))
+            self.draw_line((self.x + self.scaled_width/3*2, self.y),
+                           (self.x + self.scaled_width/3*2, self.y + self.scaled_height_2/2))
             # draw arc
             arc_height = self.scaled_height / 2 - self.scaled_height_2 / 2
             arc_width = self.scaled_width/3
             radius = (arc_width ** 2 / (8 * arc_height)) + arc_height / 2
-            center_x = self.x + self.scaled_width / 2 + x_offset
-            center_y = self.y + self.scaled_height_2/2 - (radius - arc_height) + y_offset
+            center_x = self.x + self.scaled_width / 2
+            center_y = self.y + self.scaled_height_2/2 - (radius - arc_height)
 
             # Calculate the central angle of the chord
             central_angle = 2 * math.asin(arc_width / (2 * radius))
@@ -158,8 +150,8 @@ class Eyebrow:
             for touchpoint_sun, touchpoint_panel in zip(sun_touch_points, panel_touch_points):
                 x1, y1 = touchpoint_panel
                 x2, y2 = touchpoint_sun
-                self.draw_line((center_x - x1, center_y + y1 + y_offset),
-                               (center_x - x2, center_y + y2 + y_offset))
+                self.draw_line((center_x - x1, center_y + y1),
+                               (center_x - x2, center_y + y2))
         elif pattern_name == 'colonial':
             # draw vertical lines
             vertical_muntin_spacing = self.scaled_width / 3
@@ -169,16 +161,16 @@ class Eyebrow:
             # calculate the chord length of side arc
             side_arc_chord = 2 * math.sqrt(radius**2 - (radius - side_arc_height)**2)
             mun_height = side_arc_chord / 2 - (radius - self.scaled_height)
-            self.draw_line((self.x + x_offset + self.scaled_width/3, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width/3, self.y + y_offset + mun_height))
-            self.draw_line((self.x + x_offset + self.scaled_width/3*2, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width/3*2, self.y + y_offset + mun_height))
+            self.draw_line((self.x + self.scaled_width/3, self.y),
+                           (self.x + self.scaled_width/3, self.y + mun_height))
+            self.draw_line((self.x + self.scaled_width/3*2, self.y),
+                           (self.x + self.scaled_width/3*2, self.y + mun_height))
 
             # draw horizontal lines
-            self.draw_line((self.x + x_offset, self.y + y_offset + self.scaled_height_2),
-                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2))
-            self.draw_line((self.x + x_offset, self.y + y_offset + self.scaled_height_2/2),
-                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2/2))
+            self.draw_line((self.x, self.y + self.scaled_height_2),
+                           (self.x + self.scaled_width, self.y + self.scaled_height_2))
+            self.draw_line((self.x, self.y + self.scaled_height_2/2),
+                           (self.x + self.scaled_width, self.y + self.scaled_height_2/2))
 
         elif 'brittany_lite' in pattern_name:
             # set brittany offset as 4
@@ -187,8 +179,8 @@ class Eyebrow:
             # draw arc
             arc_height = self.scaled_height - self.scaled_height_2
             radius = (self.scaled_width ** 2 / (8 * arc_height)) + arc_height / 2
-            center_x = self.x + self.scaled_width / 2 + x_offset
-            center_y = self.y + self.scaled_height_2 - (radius - arc_height) + y_offset - brittany_offset
+            center_x = self.x + self.scaled_width / 2
+            center_y = self.y + self.scaled_height_2 - (radius - arc_height) - brittany_offset
             # Calculate the central angle of the chord
             central_angle = 2 * math.asin(self.scaled_width / (2 * radius))
             # Calculate the start angle by subtracting half of the central angle from pi/2 (90 degrees)
@@ -202,21 +194,21 @@ class Eyebrow:
             # calculate the chord length of side arc
             side_arc_chord = 2 * math.sqrt(radius**2 - (radius - side_arc_height)**2)
             mun_height = side_arc_chord / 2 - (radius - self.scaled_height)
-            self.draw_line((self.x + x_offset + brittany_offset, self.y + y_offset),
-                           (self.x + x_offset + brittany_offset, self.y + y_offset + mun_height))
-            self.draw_line((self.x + x_offset + self.scaled_width - brittany_offset, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width - brittany_offset, self.y + y_offset + mun_height))
+            self.draw_line((self.x + brittany_offset, self.y),
+                           (self.x + brittany_offset, self.y + mun_height))
+            self.draw_line((self.x + self.scaled_width - brittany_offset, self.y),
+                           (self.x + self.scaled_width - brittany_offset, self.y + mun_height))
 
             if pattern_name == 'brittany_lite-9':
                 # draw horizontal line
-                self.draw_line((self.x + x_offset, self.y + y_offset + brittany_offset),
-                               (self.x + x_offset + self.scaled_width, self.y + y_offset + brittany_offset))
+                self.draw_line((self.x, self.y + brittany_offset),
+                               (self.x + self.scaled_width, self.y + brittany_offset))
 
         elif pattern_name == 'sunburst':
             # draw sun
             radius = self.scaled_width/4
-            center_x = self.x + self.scaled_width / 2 + x_offset
-            center_y = self.y + y_offset
+            center_x = self.x + self.scaled_width / 2
+            center_y = self.y
             self.draw_arch(center_x, center_y, radius=radius, thickness=1)
 
             # draw sun rays
@@ -229,8 +221,8 @@ class Eyebrow:
             for touchpoint_sun, touchpoint_panel in zip(sun_touch_points, panel_touch_points):
                 x1, y1 = touchpoint_panel
                 x2, y2 = touchpoint_sun
-                self.draw_line((center_x - x1, center_y + y1 + y_offset),
-                               (center_x - x2, center_y + y2 + y_offset))
+                self.draw_line((center_x - x1, center_y + y1),
+                               (center_x - x2, center_y + y2))
 
     def calculate_arc_parameters(self, height, width, total_width):
         radius = (width ** 2 / (8 * height)) + height / 2
@@ -297,7 +289,10 @@ class Eyebrow:
             x_offset = (self.scaled_width - panel['width'] * self.scale_factor) / 2
             y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
 
-            child_panel = Eyebrow(x=self.x + x_offset, y=self.y + y_offset,
+            self.x = self.x + x_offset
+            self.y = self.y + y_offset
+
+            child_panel = Eyebrow(x=self.x, y=self.y,
                                      raw_params=panel, scale_factor=self.scale_factor,
                                      draw_label=self.draw_label)
 
@@ -308,18 +303,18 @@ class Eyebrow:
             self.panel_type = panel['panel_type']
             self.name = panel['name'] if panel['panel_type'] == 'panel' else 'frame'
 
-            self.draw_line((self.x + x_offset, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width, self.y + y_offset))
-            self.draw_line((self.x + x_offset, self.y + y_offset),
-                           (self.x + x_offset, self.y + y_offset + self.scaled_height_2))
-            self.draw_line((self.x + x_offset + self.scaled_width, self.y + y_offset),
-                           (self.x + x_offset + self.scaled_width, self.y + y_offset + self.scaled_height_2))
+            self.draw_line((self.x, self.y),
+                           (self.x + self.scaled_width, self.y))
+            self.draw_line((self.x, self.y),
+                           (self.x, self.y + self.scaled_height_2))
+            self.draw_line((self.x + self.scaled_width, self.y),
+                           (self.x + self.scaled_width, self.y + self.scaled_height_2))
 
             # draw arc
             arc_height = self.scaled_height - self.scaled_height_2
             radius = (self.scaled_width ** 2 / (8 * arc_height)) + arc_height / 2
-            center_x = self.x + self.scaled_width / 2 + x_offset
-            center_y = self.y + self.scaled_height_2 - (radius - arc_height) + y_offset
+            center_x = self.x + self.scaled_width / 2
+            center_y = self.y + self.scaled_height_2 - (radius - arc_height)
 
             # Calculate the central angle of the chord
             central_angle = 2 * math.asin(self.scaled_width / (2 * radius))
@@ -335,10 +330,7 @@ class Eyebrow:
             # draw muntins
             pattern_name = self.raw_params.get('muntin_pattern', None)
             if pattern_name:
-                self.draw_muntin(pattern_name, radius, (center_x, self.y), y_offset, x_offset)
-
-            self.x = self.x + x_offset
-            self.y = self.y + y_offset
+                self.draw_muntin(pattern_name, radius, (center_x, self.y))
 
             if self.draw_label:
                 width_label_cords = {
