@@ -6,6 +6,7 @@ from typing import Dict
 
 from components.panel import Panel
 from components.shapes.circle import Circle
+from components.shapes.arch import Arch
 from components.shapes.half_circle import HalfCircle
 from components.shapes.octagon import Octagon
 from enums.colors import Colors
@@ -21,6 +22,9 @@ class Canvas:
 
         self.context = None
         self.__surface = None
+        self.scale_factor = raw_params.get('scale_factor', 5)
+
+
 
     def draw(self):
         self.context = self.__create_context()
@@ -44,6 +48,12 @@ class Canvas:
                         draw_label=self.draw_label)
             c.set_context(self.context)
             c.draw_shape()
+        elif shape == 'arch':
+            a = Arch(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.draw_label)
+            a.set_context(self.context)
+            a.draw_shape()
         self.__close()
 
 
@@ -128,12 +138,10 @@ class Canvas:
 
     @cached_property
     def scaled_frame_width(self):
-        from components.panel import Panel
         return self.frame_width * self.scale_factor
 
     @cached_property
     def scaled_frame_height(self):
-        from components.panel import Panel
         return self.frame_height * self.scale_factor
 
     @cached_property
@@ -187,7 +195,8 @@ class Canvas:
             x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
             y=self.BORDER_BOTTOM_OFFSET,
             parent_panel=None,
-            raw_params=self.raw_params
+            raw_params=self.raw_params,
+            scale_factor=self.raw_params.get('scale_factor')
         ).set_context(context)
 
         initial_frame.draw()
