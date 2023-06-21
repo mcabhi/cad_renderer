@@ -17,6 +17,7 @@ class Canvas:
     def __init__(self, raw_params: Dict):
         self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
         self.raw_params = raw_params
+        self.scale_factor = raw_params.get('scale_factor', 5)
 
         self.context = None
         self.__surface = None
@@ -44,6 +45,7 @@ class Canvas:
             c.set_context(self.context)
             c.draw_shape()
         self.__close()
+
 
     @cached_property
     def draw_label(self):
@@ -116,12 +118,12 @@ class Canvas:
     @cached_property
     def scaled_frame_width(self):
         from components.panel import Panel
-        return self.frame_width * Panel.SCALE_FACTOR
+        return self.frame_width * self.scale_factor
 
     @cached_property
     def scaled_frame_height(self):
         from components.panel import Panel
-        return self.frame_height * Panel.SCALE_FACTOR
+        return self.frame_height * self.scale_factor
 
     @cached_property
     def scaled_framed_width_with_labels(self):
