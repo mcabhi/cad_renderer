@@ -43,6 +43,10 @@ class Canvas:
         return self.raw_params.get('draw_label', True)
 
     @cached_property
+    def is_transparent(self):
+        return self.raw_params.get('is_transparent', False)
+
+    @cached_property
     def panel_type(self):
         return self.raw_params['panel_type']
 
@@ -149,7 +153,10 @@ class Canvas:
         self.__surface = cairo.SVGSurface(self.filename, self.canvas_width, self.canvas_height)
 
         context = cairo.Context(self.__surface)
-        context.set_source_rgba(*Colors.WHITE)
+        if not self.is_transparent:
+            context.set_source_rgba(*Colors.WHITE)
+        else:
+            context.set_source_rgba(0, 0, 0, 0)
         context.paint()
 
         matrix = cairo.Matrix(yy=-1, y0=self.canvas_height)
