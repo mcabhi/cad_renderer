@@ -11,7 +11,7 @@ from enums.colors import Colors
 
 
 class Canvas:
-    BORDER_LEFT_OFFSET, BORDER_RIGHT_OFFSET, BORDER_TOP_OFFSET, BORDER_BOTTOM_OFFSET = 10, 30, 10, 10
+    BORDER_LEFT_OFFSET, BORDER_RIGHT_OFFSET, BORDER_TOP_OFFSET, BORDER_BOTTOM_OFFSET = 10, 10, 10, 10
 
     def __init__(self, raw_params: Dict):
         self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
@@ -64,6 +64,10 @@ class Canvas:
 
     @cached_property
     def left_positioned_labels_width(self):
+        # return 0 if draw_label is false
+        if not self.draw_label:
+            return 0
+
         from components.size_label import SizeLabel
         from components.panel import Panel
 
@@ -86,6 +90,9 @@ class Canvas:
 
     @cached_property
     def top_positioned_labels_height(self):
+        # return 0 if draw_label is false
+        if not self.draw_label:
+            return 0
         from components.panel import Panel
         from components.size_label import SizeLabel
 
