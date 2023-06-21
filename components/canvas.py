@@ -29,18 +29,18 @@ class Canvas:
             self.__draw_frame(self.context)
         elif shape == 'halfcircle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
                             draw_label=self.draw_label)
             hc.set_context(self.context)
             hc.draw_shape()
         elif shape == 'circle':
             c = Circle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                       raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR, draw_label=self.draw_label)
+                       raw_params=self.raw_params, scale_factor=self.scale_factor, draw_label=self.draw_label)
             c.set_context(self.context)
             c.draw_shape()
         elif shape == 'octagon':
             c = Octagon(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                        raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                        raw_params=self.raw_params, scale_factor=self.scale_factor,
                         draw_label=self.draw_label)
             c.set_context(self.context)
             c.draw_shape()
