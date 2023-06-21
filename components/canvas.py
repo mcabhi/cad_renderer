@@ -6,8 +6,8 @@ from typing import Dict
 
 from components.panel import Panel
 from components.shapes.circle import Circle
-from components.shapes.octagon import Octagon
 from components.shapes.half_circle import HalfCircle
+from components.shapes.octagon import Octagon
 from enums.colors import Colors
 
 
@@ -39,8 +39,8 @@ class Canvas:
             c.draw_shape()
         elif shape == 'octagon':
             c = Octagon(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
-                            draw_label=self.raw_params.get('draw_label', True))
+                        raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
+                        draw_label=self.draw_label)
             c.set_context(self.context)
             c.draw_shape()
         self.__close()
