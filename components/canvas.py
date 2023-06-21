@@ -153,10 +153,10 @@ class Canvas:
         self.__surface = cairo.SVGSurface(self.filename, self.canvas_width, self.canvas_height)
 
         context = cairo.Context(self.__surface)
-        if not self.is_transparent:
-            context.set_source_rgba(*Colors.WHITE)
-        else:
+        if self.is_transparent:
             context.set_source_rgba(0, 0, 0, 0)
+        else:
+            context.set_source_rgba(*Colors.WHITE)
         context.paint()
 
         matrix = cairo.Matrix(yy=-1, y0=self.canvas_height)
