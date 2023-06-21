@@ -1,14 +1,13 @@
+import cairo
 import random
 import string
 from functools import cached_property
 from typing import Dict
 
-import cairo
-
 from components.panel import Panel
-from components.shapes.half_circle import HalfCircle
 from components.shapes.circle import Circle
 from components.shapes.octagon import Octagon
+from components.shapes.half_circle import HalfCircle
 from enums.colors import Colors
 
 
@@ -24,19 +23,18 @@ class Canvas:
 
     def draw(self):
         self.context = self.__create_context()
-        shape = self.raw_params.get('shape')
-        if shape is None:
+        shape = self.raw_params.get('shape', None)
+        if not shape:
             self.__draw_frame(self.context)
-        elif shape == 'half circle':
+        elif shape == 'halfcircle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
                             raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
-                            draw_label=self.raw_params.get('draw_label', True))
+                            draw_label=self.draw_label)
             hc.set_context(self.context)
             hc.draw_shape()
         elif shape == 'circle':
             c = Circle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR,
-                            draw_label=self.raw_params.get('draw_label', True))
+                       raw_params=self.raw_params, scale_factor=Panel.SCALE_FACTOR, draw_label=self.draw_label)
             c.set_context(self.context)
             c.draw_shape()
         elif shape == 'octagon':
@@ -46,6 +44,10 @@ class Canvas:
             c.set_context(self.context)
             c.draw_shape()
         self.__close()
+
+    @cached_property
+    def draw_label(self):
+        return self.raw_params.get('draw_label', True)
 
     @cached_property
     def panel_type(self):
