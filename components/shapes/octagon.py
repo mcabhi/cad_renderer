@@ -1,12 +1,11 @@
 import math
-
 import cairo
 
 from components.shapes.shape_label import ShapeLabel
 from enums.colors import Colors
 
 
-class Circle:
+class Octagon:
     def __init__(self, x=0, y=0, raw_params=None, scale_factor=1, draw_label=True):
         self._context = None
         self.parent_panel = None
@@ -22,6 +21,7 @@ class Circle:
         self.scale_factor = scale_factor
         self._size_labels = []
         self.child_labels = []
+        self.vertices = [] 
 
     @property
     def width(self):
@@ -73,46 +73,62 @@ class Circle:
         self._context = context
         return self
 
-    def draw_circle(self, center_x, center_y, radius, thickness=1, start_angle=0.0,):
+    def draw_octagon(self, center_x, center_y, side_length, thickness=1):
         self.context.new_sub_path()
         self.context.save()
         self.context.set_source_rgba(*Colors.BLACK)
         self.context.set_line_width(thickness)
 
-        self.context.arc(center_x, center_y, radius, start_angle, start_angle + 2 * math.pi)
+        angle = 2 * math.pi / 8  # Angle between adjacent sides of the octagon
+
+        # Calculate the coordinates of the octagon vertices
+        self.vertices = []
+        for i in range(8):
+            x = center_x + side_length * math.cos(i * angle + math.pi / 8)
+            y = center_y + side_length * math.sin(i * angle + math.pi / 8)
+            self.vertices.append((x, y))
+
+        # Move to the first vertex
+        self.context.move_to(*self.vertices[0])
+
+        # Draw lines to connect the vertices
+        for i in range(1, 8):
+            self.context.line_to(*self.vertices[i])
+
+        # Close the path
+        self.context.close_path()
 
         self.context.stroke()
         self.context.restore()
 
-
     def draw_shape(self):
-        # draw frame    
-        outer_radius = self.scaled_width / 2
-        self.draw_circle(center_x=self.x + self.scaled_width / 2, center_y=self.y  + self.scaled_height / 2, radius=outer_radius,
-                              thickness=1)
+        # Draw frame
+        outer_side_length =  self.scaled_width / 2
+        self.draw_octagon(center_x=self.x + self.scaled_width / 2, center_y=self.y + self.scaled_height / 2,
+                          side_length=outer_side_length, thickness=2)
 
         if self.draw_label:
             width_label_cords = {
-                "x1": self.x,
+                "x1": self.vertices[3][0],
                 "y1": self.y + self.scaled_height,
-                "x2": self.x,
+                "x2": self.vertices[3][0],
                 "y2": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "x3": self.x + self.scaled_width,
+                "x3": self.vertices[0][0],
                 "y3": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "x4": self.x + self.scaled_width,
+                "x4": self.vertices[0][0],
                 "y4": self.y + self.scaled_height
             }
             width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
 
             height_label_cords = {
                 "x1": self.x,
-                "y1": self.y,
+                "y1": self.vertices[5][1],
                 "x2": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "y2": self.y,
+                "y2": self.vertices[5][1],
                 "x3": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
-                "y3": self.y + self.scaled_height,
+                "y3": self.vertices[1][1],
                 "x4": self.x,
-                "y4": self.y + self.scaled_height
+                "y4": self.vertices[1][1]
             }
             height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
             width_label.draw()
@@ -124,9 +140,9 @@ class Circle:
             x_offset = (self.scaled_width - panel['width'] * self.scale_factor) / 2
             y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
 
-            child_panel = Circle(x=self.x + x_offset, y=self.y + x_offset,
-                                     raw_params=panel, scale_factor=self.scale_factor,
-                                     draw_label=self.draw_label)
+            child_panel = Octagon(x=self.x + x_offset, y=self.y + x_offset,
+                                  raw_params=panel, scale_factor=self.scale_factor,
+                                  draw_label=self.draw_label)
 
             self.child_labels.append(child_panel)
 
@@ -135,41 +151,39 @@ class Circle:
             self.panel_type = panel['panel_type']
             self.name = panel['name'] if panel['panel_type'] == 'panel' else 'frame'
 
-            radius = self.scaled_width / 2
+            side_length = self.scaled_width / 2
 
-            # draw panel
-            self.draw_circle(center_x=self.x + self.scaled_width / 2 + x_offset,
-                                  center_y=self.y  + self.scaled_height / 2 + y_offset,
-                                  radius=radius,
-                                  thickness=1,
-                                  start_angle=0)
-
+            # Draw panel
+            self.draw_octagon(center_x=self.x + self.scaled_width / 2 + x_offset,
+                              center_y=self.y + self.scaled_height / 2 + y_offset,
+                              side_length=side_length,
+                              thickness=1)
 
             self.x = self.x + x_offset
             self.y = self.y + x_offset
 
             if self.draw_label:
                 width_label_cords = {
-                    "x1": self.x,
+                    "x1": self.vertices[3][0],
                     "y1": self.y + self.scaled_height,
-                    "x2": self.x,
+                    "x2": self.vertices[3][0],
                     "y2": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
-                    "x3": self.x + self.scaled_width,
+                    "x3": self.vertices[0][0],
                     "y3": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
-                    "x4": self.x + self.scaled_width,
+                    "x4": self.vertices[0][0],
                     "y4": self.y + self.scaled_height
                 }
                 width_label = ShapeLabel(panel=self, label_type='width', coordinates=width_label_cords)
 
                 height_label_cords = {
                     "x1": self.x,
-                    "y1": self.y,
+                    "y1": self.vertices[5][1],
                     "x2": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-                    "y2": self.y,
+                    "y2": self.vertices[5][1],
                     "x3": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-                    "y3": self.y + self.scaled_height - x_offset,
+                    "y3": self.vertices[1][1],
                     "x4": self.x,
-                    "y4": self.y + self.scaled_height - x_offset
+                    "y4": self.vertices[1][1],
                 }
                 height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
                 width_label.draw()

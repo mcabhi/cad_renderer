@@ -1,15 +1,14 @@
+import cairo
 import random
 import string
 from functools import cached_property
 from typing import Dict
 
-import cairo
-
 from components.panel import Panel
-from components.shapes.half_circle import HalfCircle
 from components.shapes.circle import Circle
 from components.shapes.arch import Arch
-
+from components.shapes.half_circle import HalfCircle
+from components.shapes.octagon import Octagon
 from enums.colors import Colors
 
 
@@ -19,6 +18,7 @@ class Canvas:
     def __init__(self, raw_params: Dict):
         self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
         self.raw_params = raw_params
+        self.scale_factor = raw_params.get('scale_factor', 5)
 
         self.context = None
         self.__surface = None
@@ -34,22 +34,36 @@ class Canvas:
         elif shape == 'halfcircle':
             hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
                             raw_params=self.raw_params, scale_factor=self.scale_factor,
-                            draw_label=self.raw_params.get('draw_label', True))
+                            draw_label=self.draw_label)
             hc.set_context(self.context)
             hc.draw_shape()
         elif shape == 'circle':
             c = Circle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=self.scale_factor,
-                            draw_label=self.raw_params.get('draw_label', True))
+                       raw_params=self.raw_params, scale_factor=self.scale_factor, draw_label=self.draw_label)
+            c.set_context(self.context)
+            c.draw_shape()
+        elif shape == 'octagon':
+            c = Octagon(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                        raw_params=self.raw_params, scale_factor=self.scale_factor,
+                        draw_label=self.draw_label)
             c.set_context(self.context)
             c.draw_shape()
         elif shape == 'arch':
             a = Arch(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
                             raw_params=self.raw_params, scale_factor=self.scale_factor,
-                            draw_label=self.raw_params.get('draw_label', True))
+                            draw_label=self.draw_label)
             a.set_context(self.context)
             a.draw_shape()
         self.__close()
+
+
+    @cached_property
+    def draw_label(self):
+        return self.raw_params.get('draw_label', True)
+
+    @cached_property
+    def is_transparent(self):
+        return self.raw_params.get('is_transparent', False)
 
     @cached_property
     def panel_type(self):
@@ -156,7 +170,10 @@ class Canvas:
         self.__surface = cairo.SVGSurface(self.filename, self.canvas_width, self.canvas_height)
 
         context = cairo.Context(self.__surface)
-        context.set_source_rgba(*Colors.WHITE)
+        if self.is_transparent:
+            context.set_source_rgba(0, 0, 0, 0)
+        else:
+            context.set_source_rgba(*Colors.WHITE)
         context.paint()
 
         matrix = cairo.Matrix(yy=-1, y0=self.canvas_height)
