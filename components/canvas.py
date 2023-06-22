@@ -124,7 +124,7 @@ class Canvas:
             else:
                 num_of_child_labels = Panel.LABELS_PER_PANEL
         else:
-            num_of_child_labels = 0
+            num_of_child_labels = Panel.LABELS_PER_PANEL
 
         total_number_of_labels = num_of_child_labels + Panel.LABELS_PER_FRAME
 
@@ -149,7 +149,7 @@ class Canvas:
             else:
                 num_of_child_labels = len(self.child_panels) * Panel.LABELS_PER_PANEL
         else:
-            num_of_child_labels = 0
+            num_of_child_labels = Panel.LABELS_PER_PANEL
 
         total_number_of_labels = num_of_child_labels + Panel.LABELS_PER_FRAME
 
