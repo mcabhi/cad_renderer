@@ -85,17 +85,16 @@ class Arch:
         y_change = radius - self.scaled_height
         x_change = self.scaled_width / 2
 
-        self.context.move_to(center_x - x_change, center_y + y_change)
-        self.context.line_to(center_x + x_change, center_y + y_change)
+        self.draw_line((center_x - x_change, center_y + y_change), (center_x + x_change, center_y + y_change), 2)
 
         self.context.stroke()
         self.context.restore()
 
-    def draw_line(self, start, end):
-
+    def draw_line(self, start, end, thickness=1):
         self.context.set_source_rgba(*Colors.BLACK)
-        self.context.set_line_width(1)
-
+        self.context.set_line_width(thickness)
+        self.context.set_line_join(cairo.LineJoin.ROUND)
+        self.context.set_line_cap(cairo.LineCap.ROUND)
         start_x, start_y = start
         end_x, end_y = end
 
