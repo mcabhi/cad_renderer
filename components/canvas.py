@@ -1,29 +1,91 @@
+import cairo
 import random
 import string
 from functools import cached_property
 from typing import Dict
 
-import cairo
-
+from components.panel import Panel
+from components.shapes.circle import Circle
+from components.shapes.eyebrow import Eyebrow
+from components.shapes.arch import Arch
+from components.shapes.half_circle import HalfCircle
+from components.shapes.octagon import Octagon
 from enums.colors import Colors
 
 
 class Canvas:
-    BORDER_LEFT_OFFSET, BORDER_RIGHT_OFFSET, BORDER_TOP_OFFSET, BORDER_BOTTOM_OFFSET = 10, 30, 10, 10
+    BORDER_LEFT_OFFSET, BORDER_RIGHT_OFFSET, BORDER_TOP_OFFSET, BORDER_BOTTOM_OFFSET = 10, 10, 10, 10
 
     def __init__(self, raw_params: Dict):
         self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
         self.raw_params = raw_params
+        self.scale_factor = self.calculate_scale_factor()
 
         self.context = None
         self.__surface = None
 
+
+
     def draw(self):
         self.context = self.__create_context()
-
-        self.__draw_frame(self.context)
-
+        shape = self.raw_params.get('shape', None)
+        if not shape:
+            self.__draw_frame(self.context)
+        elif shape == 'halfcircle':
+            hc = HalfCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.draw_label)
+            hc.set_context(self.context)
+            hc.draw_shape()
+        elif shape == 'circle':
+            c = Circle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                       raw_params=self.raw_params, scale_factor=self.scale_factor, draw_label=self.draw_label)
+            c.set_context(self.context)
+            c.draw_shape()
+        elif shape == 'octagon':
+            c = Octagon(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                        raw_params=self.raw_params, scale_factor=self.scale_factor,
+                        draw_label=self.draw_label)
+            c.set_context(self.context)
+            c.draw_shape()
+        elif shape == 'eyebrow':
+            e = Eyebrow(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.draw_label)
+            e.set_context(self.context)
+            e.draw_shape()
+        elif shape == 'arch':
+            a = Arch(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.draw_label)
+            a.set_context(self.context)
+            a.draw_shape()
+            
         self.__close()
+
+    # calculate total width with no scale factor
+    def calculate_total_width(self):
+        frame_width_with_labels = self.frame_width + self.left_positioned_labels_width
+        return frame_width_with_labels + self.BORDER_LEFT_OFFSET + self.BORDER_RIGHT_OFFSET
+
+    def calculate_scale_factor(self):
+        max_canvas_width = self.max_canvas_width
+        if max_canvas_width:
+            total_width = self.calculate_total_width()
+            return max_canvas_width / total_width
+        return self.raw_params.get('scale_factor', 5)
+
+    @cached_property
+    def max_canvas_width(self):
+        return self.raw_params.get('max_canvas_width')
+
+    @cached_property
+    def draw_label(self):
+        return self.raw_params.get('draw_label', True)
+
+    @cached_property
+    def is_transparent(self):
+        return self.raw_params.get('is_transparent', False)
 
     @cached_property
     def panel_type(self):
@@ -47,6 +109,10 @@ class Canvas:
 
     @cached_property
     def left_positioned_labels_width(self):
+        # return 0 if draw_label is false
+        if not self.draw_label:
+            return 0
+
         from components.size_label import SizeLabel
         from components.panel import Panel
 
@@ -58,7 +124,7 @@ class Canvas:
             else:
                 num_of_child_labels = Panel.LABELS_PER_PANEL
         else:
-            num_of_child_labels = 0
+            num_of_child_labels = Panel.LABELS_PER_PANEL
 
         total_number_of_labels = num_of_child_labels + Panel.LABELS_PER_FRAME
 
@@ -69,6 +135,9 @@ class Canvas:
 
     @cached_property
     def top_positioned_labels_height(self):
+        # return 0 if draw_label is false
+        if not self.draw_label:
+            return 0
         from components.panel import Panel
         from components.size_label import SizeLabel
 
@@ -80,7 +149,7 @@ class Canvas:
             else:
                 num_of_child_labels = len(self.child_panels) * Panel.LABELS_PER_PANEL
         else:
-            num_of_child_labels = 0
+            num_of_child_labels = Panel.LABELS_PER_PANEL
 
         total_number_of_labels = num_of_child_labels + Panel.LABELS_PER_FRAME
 
@@ -91,13 +160,11 @@ class Canvas:
 
     @cached_property
     def scaled_frame_width(self):
-        from components.panel import Panel
-        return self.frame_width * Panel.SCALE_FACTOR
+        return self.frame_width * self.scale_factor
 
     @cached_property
     def scaled_frame_height(self):
-        from components.panel import Panel
-        return self.frame_height * Panel.SCALE_FACTOR
+        return self.frame_height * self.scale_factor
 
     @cached_property
     def scaled_framed_width_with_labels(self):
@@ -132,7 +199,10 @@ class Canvas:
         self.__surface = cairo.SVGSurface(self.filename, self.canvas_width, self.canvas_height)
 
         context = cairo.Context(self.__surface)
-        context.set_source_rgba(*Colors.WHITE)
+        if self.is_transparent:
+            context.set_source_rgba(0, 0, 0, 0)
+        else:
+            context.set_source_rgba(*Colors.WHITE)
         context.paint()
 
         matrix = cairo.Matrix(yy=-1, y0=self.canvas_height)
@@ -147,7 +217,8 @@ class Canvas:
             x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
             y=self.BORDER_BOTTOM_OFFSET,
             parent_panel=None,
-            raw_params=self.raw_params
+            raw_params=self.raw_params,
+            scale_factor=self.raw_params.get('scale_factor')
         ).set_context(context)
 
         initial_frame.draw()
