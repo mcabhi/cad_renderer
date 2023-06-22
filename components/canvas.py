@@ -19,11 +19,10 @@ class Canvas:
     def __init__(self, raw_params: Dict):
         self.filename = f"/tmp/{''.join(random.choice(string.ascii_uppercase) for _ in range(20))}.svg"
         self.raw_params = raw_params
-        self.scale_factor = raw_params.get('scale_factor', 5)
+        self.scale_factor = self.calculate_scale_factor()
 
         self.context = None
         self.__surface = None
-        self.scale_factor = raw_params.get('scale_factor', 5)
 
 
 
@@ -64,6 +63,21 @@ class Canvas:
             
         self.__close()
 
+    # calculate total width with no scale factor
+    def calculate_total_width(self):
+        frame_width_with_labels = self.frame_width + self.left_positioned_labels_width
+        return frame_width_with_labels + self.BORDER_LEFT_OFFSET + self.BORDER_RIGHT_OFFSET
+
+    def calculate_scale_factor(self):
+        max_canvas_width = self.max_canvas_width
+        if max_canvas_width:
+            total_width = self.calculate_total_width()
+            return max_canvas_width / total_width
+        return self.raw_params.get('scale_factor', 5)
+
+    @cached_property
+    def max_canvas_width(self):
+        return self.raw_params.get('max_canvas_width')
 
     @cached_property
     def draw_label(self):

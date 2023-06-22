@@ -19,12 +19,11 @@ class Panel:
         self.y = y
         self.parent_panel = parent_panel
         self.raw_params = raw_params
-        self.SCALE_FACTOR = scale_factor
 
         self.panel_type = raw_params['panel_type']
         self.name = raw_params['name'] if raw_params['panel_type'] == 'panel' else 'frame'
         self.move_direction = raw_params.get('move_direction')
-        self.scale_factor = raw_params.get('scale_factor', 5)
+        self.scale_factor = scale_factor
 
         self.child_panels = []
         self._size_labels = []
