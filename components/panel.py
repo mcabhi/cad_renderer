@@ -9,12 +9,10 @@ from enums.colors import Colors
 
 
 class Panel:
-    SCALE_FACTOR = 5
-
     LABELS_PER_FRAME = 1
     LABELS_PER_PANEL = 2
 
-    def __init__(self, x=0.0, y=0.0, parent_panel=None, raw_params=None):
+    def __init__(self, x=0.0, y=0.0, parent_panel=None, raw_params=None, scale_factor=5):
         self._context = None
 
         self.x = x
@@ -25,6 +23,7 @@ class Panel:
         self.panel_type = raw_params['panel_type']
         self.name = raw_params['name'] if raw_params['panel_type'] == 'panel' else 'frame'
         self.move_direction = raw_params.get('move_direction')
+        self.scale_factor = scale_factor
 
         self.child_panels = []
         self._size_labels = []
@@ -47,19 +46,19 @@ class Panel:
 
     @property
     def scaled_width(self):
-        return self.width * self.SCALE_FACTOR
+        return self.width * self.scale_factor
 
     @property
     def scaled_height(self):
-        return self.height * self.SCALE_FACTOR
+        return self.height * self.scale_factor
 
     @property
     def scaled_dlo_width(self):
-        return self.dlo_width * self.SCALE_FACTOR
+        return self.dlo_width * self.scale_factor
 
     @property
     def scaled_dlo_height(self):
-        return self.dlo_height * self.SCALE_FACTOR
+        return self.dlo_height * self.scale_factor
 
     @property
     def raw_child_panels(self):
@@ -74,7 +73,7 @@ class Panel:
 
         siblings = [_ for _ in self.raw_child_frames if raw_frame['coordinates']['y'] == _['coordinates']['y']]
 
-        scaled_total_child_width = sum([_['width'] * self.SCALE_FACTOR for _ in siblings])
+        scaled_total_child_width = sum([_['width'] * self.scale_factor for _ in siblings])
 
         if self.scaled_width < scaled_total_child_width:
             factor = self.scaled_width / scaled_total_child_width
@@ -87,8 +86,8 @@ class Panel:
     def get_normalized_child_panel(self, raw_panel):
         from services.normalization_service import NormalizationService
 
-        scaled_total_child_width = sum([_['width'] * self.SCALE_FACTOR for _ in self.raw_child_panels])
-        scaled_total_child_height = sum([_['height'] * self.SCALE_FACTOR for _ in self.raw_child_panels])
+        scaled_total_child_width = sum([_['width'] * self.scale_factor for _ in self.raw_child_panels])
+        scaled_total_child_height = sum([_['height'] * self.scale_factor for _ in self.raw_child_panels])
 
         invalid_condition_1 = self.child_panels_layout == 'horizontal' and self.scaled_width < scaled_total_child_width
         invalid_condition_2 = self.child_panels_layout == 'vertical' and self.scaled_height < scaled_total_child_height
@@ -176,13 +175,13 @@ class Panel:
 
                 x1 += frame.scaled_width
 
-            y1 += max([_['height'] * self.SCALE_FACTOR for _ in _frames])
+            y1 += max([_['height'] * self.scale_factor for _ in _frames])
 
     def _draw_child_panels(self):
         normalized_raw_child_panels = [self.get_normalized_child_panel(raw_panel=_) for _ in self.raw_child_panels]
 
-        scaled_total_normalized_child_width = sum([_['width'] * self.SCALE_FACTOR for _ in normalized_raw_child_panels])
-        scaled_total_normalized_child_height = sum([_['height'] * self.SCALE_FACTOR for _ in normalized_raw_child_panels])
+        scaled_total_normalized_child_width = sum([_['width'] * self.scale_factor for _ in normalized_raw_child_panels])
+        scaled_total_normalized_child_height = sum([_['height'] * self.scale_factor for _ in normalized_raw_child_panels])
 
         x_offset, y_offset = 0, 0
         if self.child_panels_layout == 'horizontal':
@@ -193,9 +192,9 @@ class Panel:
         previous_panel = None
         for normalized_child_panel in sorted(normalized_raw_child_panels, key=lambda _: _['name'], reverse=self.child_panels_layout == 'vertical'):
             if self.child_panels_layout == 'horizontal':
-                y_offset = (self.scaled_height - normalized_child_panel['height'] * self.SCALE_FACTOR) / 2
+                y_offset = (self.scaled_height - normalized_child_panel['height'] * self.scale_factor) / 2
             elif self.child_panels_layout == 'vertical':
-                x_offset = (self.scaled_width - normalized_child_panel['width'] * self.SCALE_FACTOR) / 2
+                x_offset = (self.scaled_width - normalized_child_panel['width'] * self.scale_factor) / 2
 
             if previous_panel:
                 if self.child_panels_layout == 'horizontal':
