@@ -81,7 +81,7 @@ class Tombstone:
         self._context = context
         return self
 
-    def draw_arch(self, center_x, center_y, radius, thickness=1, start_angle=0.0, start_offset=0):
+    def draw_arch(self, center_x, center_y, radius, thickness=1, start_angle=0.0):
         self.context.new_sub_path()
         self.context.save()
         self.context.set_source_rgba(*Colors.BLACK)
@@ -201,7 +201,7 @@ class Tombstone:
             self.draw_line((self.x, self.y + self.scaled_height_2),
                            (self.x + self.scaled_width/3, self.y + self.scaled_height_2))
             self.draw_line((self.x + self.scaled_width/3*2, self.y + self.scaled_height_2),
-                           (self.x + self.scaled_width,self.y + self.scaled_height_2))
+                           (self.x + self.scaled_width, self.y + self.scaled_height_2))
 
             self.draw_vertical_lines(2)
 
@@ -219,7 +219,6 @@ class Tombstone:
             # draw sun arch
             sun_height = self.scaled_width / 4
             sun_width = self.scaled_width / 2
-
             self.draw_sun(sun_height, sun_width)
 
             self.draw_vertical_lines(3)
@@ -290,8 +289,9 @@ class Tombstone:
         elif pattern_name == 'lite-3_colonial-3x2_arch':
             sun_height = self.scaled_width / 6
             sun_width = self.scaled_width / 3
+            sun_radius = self.find_arc_radius(sun_height, sun_width)
             self.draw_sun(sun_height, sun_width)
-            self.draw_sun_rays(radius, sun_width, sun_width, sun_height, center, 1)
+            self.draw_sun_rays(radius, sun_radius, sun_width, sun_height, center, 1)
             self.draw_vertical_lines(2)
             self.draw_horizontal_lines(2)
 
