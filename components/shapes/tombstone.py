@@ -226,18 +226,15 @@ class Tombstone:
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 3)
             self.draw_lines_center_touchpoints(center, touch_points)
 
-        elif pattern_name == 'lite-5_sunburst_colonial-3x1':
+        elif pattern_name == 'lite-5_sunburst_colonial-3x1' or pattern_name == 'lite-5_colonial-3x1_arch':
             # draw sun arch
             sun_height = self.scaled_width / 6
             sun_width = self.scaled_width / 3
             sun_radius = self.find_arc_radius(sun_height, sun_width)
             self.draw_sun(sun_height, sun_width)
             self.draw_sun_rays(radius, sun_radius, sun_width, sun_height, center, 3)
-
-            # draw sun chord
-            self.draw_line((self.x, self.y + self.scaled_height_2),
-                           (self.x + self.scaled_width, self.y + self.scaled_height_2))
             self.draw_vertical_lines(2)
+            self.draw_horizontal_lines(1)
 
         elif pattern_name == 'lite-2_colonial-1x1_arch':
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 1)
@@ -259,28 +256,28 @@ class Tombstone:
             self.draw_lines_center_touchpoints(center, touch_points)
             self.draw_horizontal_lines(2)
 
-        elif pattern_name == 'lite-2_colonial-1x1_arch_2':
+        elif pattern_name == 'lite-4_colonial-1x1_arch':
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 3)
             self.draw_lines_center_touchpoints(center, touch_points, center_y_offset=self.scaled_height_2)
             self.draw_horizontal_lines(1)
 
-        elif pattern_name == 'lite-4_colonial-1x1_arch':
+        elif pattern_name == 'lite-3_colonial-1x1_arch':
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 2)
             self.draw_lines_center_touchpoints(center, touch_points, center_y_offset=self.scaled_height_2)
             self.draw_horizontal_lines(1)
 
-        elif pattern_name == 'lite-4_colonial-1x2_arch':
+        elif pattern_name == 'lite-3_colonial-1x2_arch':
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 2)
             self.draw_lines_center_touchpoints(center, touch_points, center_y_offset=self.scaled_height_2)
             self.draw_horizontal_lines(2)
 
-        elif pattern_name == 'lite-4_colonial-2x1_arch':
+        elif pattern_name == 'lite-3_colonial-2x1_arch':
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 2)
             self.draw_lines_center_touchpoints(center, touch_points, center_y_offset=self.scaled_height_2)
             self.draw_vertical_lines(1)
             self.draw_horizontal_lines(1)
 
-        elif pattern_name == 'lite-4_colonial-2x2_arch':
+        elif pattern_name == 'lite-3_colonial-2x2_arch':
             touch_points = self.find_arc_touch_points(radius, self.scaled_width, self.scaled_height, 2)
             self.draw_lines_center_touchpoints(center, touch_points, center_y_offset=self.scaled_height_2)
             self.draw_vertical_lines(1)
@@ -295,7 +292,7 @@ class Tombstone:
             self.draw_vertical_lines(2)
             self.draw_horizontal_lines(2)
 
-        elif pattern_name == 'lite-5_colonial-3x1_arch':
+        elif pattern_name == 'lite-5_colonial-3x2_arch':
             sun_height = self.scaled_width / 6
             sun_width = self.scaled_width / 3
             sun_radius = self.find_arc_radius(sun_height, sun_width)
@@ -304,7 +301,7 @@ class Tombstone:
             self.draw_vertical_lines(2)
             self.draw_horizontal_lines(2)
 
-        elif pattern_name == 'lite-2_colonial-1x1_arch_3':
+        elif pattern_name == 'lite-5_colonial-1x1_arch':
             sun_height = self.scaled_width / 6
             sun_width = self.scaled_width / 3
             sun_radius = self.find_arc_radius(sun_height, sun_width)
