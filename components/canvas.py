@@ -10,6 +10,7 @@ from components.shapes.circle import Circle
 from components.shapes.eyebrow import Eyebrow
 from components.shapes.half_circle import HalfCircle
 from components.shapes.octagon import Octagon
+from components.shapes.tombstone import Tombstone
 from enums.colors import Colors
 
 
@@ -58,7 +59,13 @@ class Canvas:
                      draw_label=self.draw_label)
             a.set_context(self.context)
             a.draw_shape()
-
+        elif shape == 'tombstone':
+            t = Tombstone(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.draw_label)
+            t.set_context(self.context)
+            t.draw_shape()
+            
         self.__close()
 
     # calculate total width with no scale factor
