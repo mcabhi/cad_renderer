@@ -153,7 +153,6 @@ class Arch:
             sun_width = self.scaled_width / 2
 
             sun_radius = (sun_width ** 2 / (8 * sun_height)) + sun_height / 2
-            center_x = self.x + (self.scaled_width + x_offset) / 2
             center_y = self.y - (sun_radius - sun_height)
 
             # Calculate the central angle of the chord
@@ -174,7 +173,6 @@ class Arch:
             sun_width = self.scaled_width / 2
             sun_radius = (sun_width ** 2 / (8 * sun_height)) + sun_height / 2
 
-            sun_center_x = self.x + (self.scaled_width + x_offset) / 2
             sun_center_y = self.y - (sun_radius - sun_height) + y_offset
 
             # Calculate the central angle of the chord
@@ -182,7 +180,7 @@ class Arch:
 
             # Calculate the start angle by subtracting half of the central angle from pi/2 (90 degrees)
             start_angle = math.pi / 2 - (central_angle / 2)
-            self.draw_arch(sun_center_x, sun_center_y, radius=sun_radius,
+            self.draw_arch(center_x, sun_center_y, radius=sun_radius,
                            thickness=1, start_angle=start_angle)
 
             # draw lines
@@ -194,7 +192,7 @@ class Arch:
                 x1, y1 = touchpoint_panel
                 x2, y2 = touchpoint_sun
                 self.draw_line((center_x - x1, center_y + y1 + y_offset),
-                               (sun_center_x - x2, center_y + y2 + y_offset))
+                               (center_x - x2, center_y + y2 + y_offset))
 
         elif pattern_name == 'colonial-3x1':
             vertical_muntin_spacing = self.scaled_width / 3
