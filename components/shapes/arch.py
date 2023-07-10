@@ -61,6 +61,10 @@ class Arch:
         return self._size_labels
 
     @property
+    def original_width(self):
+        return self.original_width
+
+    @property
     def context(self) -> cairo.Context:
         if not self._context:
             raise NotImplementedError
@@ -277,8 +281,16 @@ class Arch:
             self._size_labels.append(height_label)
 
         for panel in self.raw_params['panels']:
+            center_x = self.x + self.scaled_width / 2
             x_offset = (self.scaled_width - panel['width'] * self.scale_factor)
             y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
+
+            ## to avoid the panel having insufficient width, adjust the panel width based on the panel height.
+            # original_width is used for labeling panel width
+            panel['original_width'] = panel['width']
+            sagitta = self.scaled_height - y_offset
+            offset_chord = 2 * math.sqrt((2 * radius * sagitta) - (sagitta ** 2))
+            panel['width'] = (offset_chord - y_offset*2) / self.scale_factor
 
             child_panel = Arch(x=self.x + x_offset, y=self.y + y_offset,
                                      raw_params=panel, scale_factor=self.scale_factor,
@@ -292,7 +304,6 @@ class Arch:
             self.name = panel['name'] if panel['panel_type'] == 'panel' else 'frame'
 
             radius = self.scaled_width ** 2 / (8 * self.scaled_height) + self.scaled_height / 2
-            center_x = self.x + (self.scaled_width + x_offset) / 2
             center_y = self.y - (radius - self.scaled_height - y_offset)
 
             # Calculate the central angle of the chord
@@ -312,7 +323,7 @@ class Arch:
             if pattern_name:
                 self.draw_muntin(pattern_name, radius, (center_x, self.y), y_offset, x_offset)
 
-            self.x = self.x + x_offset / 2
+            self.x = self.x + y_offset
             self.y = self.y + y_offset
 
             if self.draw_label:
