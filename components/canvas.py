@@ -223,7 +223,7 @@ class Canvas:
             y=self.BORDER_BOTTOM_OFFSET,
             parent_panel=None,
             raw_params=self.raw_params,
-            scale_factor=self.raw_params.get('scale_factor')
+            scale_factor=self.raw_params.get('scale_factor') or 5
         ).set_context(context)
 
         initial_frame.draw()
