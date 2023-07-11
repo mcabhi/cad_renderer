@@ -151,7 +151,7 @@ class Octagon:
             self.panel_type = panel['panel_type']
             self.name = panel['name'] if panel['panel_type'] == 'panel' else 'frame'
 
-            side_length = self.scaled_width / 2
+            side_length = self.scaled_height / 2
 
             # Draw panel
             self.draw_octagon(center_x=self.x + self.scaled_width / 2 + x_offset,

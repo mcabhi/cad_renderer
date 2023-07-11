@@ -5,11 +5,12 @@ from functools import cached_property
 from typing import Dict
 
 from components.panel import Panel
+from components.shapes.arch import Arch
 from components.shapes.circle import Circle
 from components.shapes.eyebrow import Eyebrow
-from components.shapes.arch import Arch
 from components.shapes.half_circle import HalfCircle
 from components.shapes.octagon import Octagon
+from components.shapes.tombstone import Tombstone
 from enums.colors import Colors
 
 
@@ -23,8 +24,6 @@ class Canvas:
 
         self.context = None
         self.__surface = None
-
-
 
     def draw(self):
         self.context = self.__create_context()
@@ -50,16 +49,22 @@ class Canvas:
             c.draw_shape()
         elif shape == 'eyebrow':
             e = Eyebrow(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=self.scale_factor,
-                            draw_label=self.draw_label)
+                        raw_params=self.raw_params, scale_factor=self.scale_factor,
+                        draw_label=self.draw_label)
             e.set_context(self.context)
             e.draw_shape()
-        elif shape == 'arch':
+        elif shape == 'arc':
             a = Arch(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=self.scale_factor,
-                            draw_label=self.draw_label)
+                     raw_params=self.raw_params, scale_factor=self.scale_factor,
+                     draw_label=self.draw_label)
             a.set_context(self.context)
             a.draw_shape()
+        elif shape == 'tombstone':
+            t = Tombstone(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
+                            raw_params=self.raw_params, scale_factor=self.scale_factor,
+                            draw_label=self.draw_label)
+            t.set_context(self.context)
+            t.draw_shape()
             
         self.__close()
 
