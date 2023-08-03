@@ -1,16 +1,19 @@
-import cairo
 import random
 import string
 from functools import cached_property
 from typing import Dict
 
-from components.panel import Panel
+import cairo
+
 from components.shapes.arch import Arch
 from components.shapes.circle import Circle
 from components.shapes.eyebrow import Eyebrow
 from components.shapes.half_circle import HalfCircle
 from components.shapes.octagon import Octagon
+from components.shapes.quarter_circle import QuarterCircle
 from components.shapes.tombstone import Tombstone
+from components.shapes.trapezoid import Trapezoid
+from components.shapes.triangle import Triangle
 from enums.colors import Colors
 
 
@@ -61,11 +64,31 @@ class Canvas:
             a.draw_shape()
         elif shape == 'tombstone':
             t = Tombstone(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width, y=self.BORDER_BOTTOM_OFFSET,
-                            raw_params=self.raw_params, scale_factor=self.scale_factor,
-                            draw_label=self.draw_label)
+                          raw_params=self.raw_params, scale_factor=self.scale_factor,
+                          draw_label=self.draw_label)
             t.set_context(self.context)
             t.draw_shape()
-            
+        elif shape == 'triangle':
+            triangle = Triangle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
+                                y=self.BORDER_BOTTOM_OFFSET, raw_params=self.raw_params, scale_factor=self.scale_factor,
+                                draw_label=self.draw_label, direction=self.direction)
+            triangle.set_context(self.context)
+            triangle.draw_shape()
+
+        elif shape == 'trapezoid':
+            trapezoid = Trapezoid(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
+                                  y=self.BORDER_BOTTOM_OFFSET, raw_params=self.raw_params,
+                                  scale_factor=self.scale_factor, draw_label=self.draw_label, direction=self.direction)
+            trapezoid.set_context(self.context)
+            trapezoid.draw_shape()
+
+        elif shape == 'quartercircle':
+            quarter_circle = QuarterCircle(x=self.BORDER_LEFT_OFFSET + self.left_positioned_labels_width,
+                                           y=self.BORDER_BOTTOM_OFFSET, raw_params=self.raw_params,
+                                           scale_factor=self.scale_factor, draw_label=self.draw_label,
+                                           direction=self.direction)
+            quarter_circle.set_context(self.context)
+            quarter_circle.draw_shape()
         self.__close()
 
     # calculate total width with no scale factor
@@ -93,6 +116,10 @@ class Canvas:
         return self.raw_params.get('is_transparent', False)
 
     @cached_property
+    def direction(self):
+        return self.raw_params.get('direction', "left")
+
+    @cached_property
     def panel_type(self):
         return self.raw_params['panel_type']
 
@@ -111,6 +138,10 @@ class Canvas:
     @cached_property
     def frame_height(self):
         return self.raw_params['height']
+
+    @cached_property
+    def frame_height_2(self):
+        return self.raw_params.get('height_2', 0)
 
     @cached_property
     def left_positioned_labels_width(self):
@@ -169,7 +200,7 @@ class Canvas:
 
     @cached_property
     def scaled_frame_height(self):
-        return self.frame_height * self.scale_factor
+        return max(self.frame_height, self.frame_height_2) * self.scale_factor
 
     @cached_property
     def scaled_framed_width_with_labels(self):

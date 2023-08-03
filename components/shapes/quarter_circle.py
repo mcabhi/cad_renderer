@@ -1,12 +1,13 @@
-import cairo
 import math
+
+import cairo
 
 from components.shapes.shape_label import ShapeLabel
 from enums.colors import Colors
 
 
-class Circle:
-    def __init__(self, x=0, y=0, raw_params=None, scale_factor=1, draw_label=True):
+class QuarterCircle:
+    def __init__(self, x=0, y=0, raw_params=None, scale_factor=1, draw_label=True, direction="left"):
         self._context = None
         self.parent_panel = None
         self.draw_label = draw_label
@@ -19,6 +20,7 @@ class Circle:
         self.name = raw_params['name'] if raw_params['panel_type'] == 'panel' else 'frame'
 
         self.scale_factor = scale_factor
+        self.direction = direction
         self._size_labels = []
         self.child_labels = []
 
@@ -72,23 +74,38 @@ class Circle:
         self._context = context
         return self
 
-    def draw_circle(self, center_x, center_y, radius, thickness=1, start_angle=0.0, ):
+    def draw_quarter_circle(self, x, y, radius, thickness=1):
+        """
+        Draws a quarter circle with the specified coordinates, width and height.
+
+        Args:
+            x (int): The x-coordinate of the bottom-left corner of the quarter circle.
+            y (int): The y-coordinate of the bottom-left corner of the quarter circle.
+            radius (float): The radius of the quarter circle.
+            thickness (int, optional): The thickness of the lines. Defaults to 1.
+        """
+
         self.context.new_sub_path()
         self.context.save()
         self.context.set_source_rgba(*Colors.BLACK)
         self.context.set_line_width(thickness)
 
-        self.context.arc(center_x, center_y, radius, start_angle, start_angle + 2 * math.pi)
+        if self.direction == "right":
+            self.context.move_to(x, y)
+            self.context.arc(x, y, radius, 0, math.pi / 2)
+            self.context.line_to(x, y)
+        else:
+            x = x + radius
+            self.context.move_to(x, y)
+            self.context.arc(x, y, radius, math.pi / 2, math.pi)
+            self.context.line_to(x, y)
 
         self.context.stroke()
         self.context.restore()
 
     def draw_shape(self):
         # draw frame    
-        outer_radius = self.scaled_width / 2
-        self.draw_circle(center_x=self.x + self.scaled_width / 2, center_y=self.y + self.scaled_height / 2,
-                         radius=outer_radius,
-                         thickness=1)
+        self.draw_quarter_circle(x=self.x, y=self.y, radius=self.scaled_height, thickness=2)
 
         if self.draw_label:
             width_label_cords = {
@@ -120,12 +137,12 @@ class Circle:
             self._size_labels.append(height_label)
 
         for panel in self.raw_params['panels']:
-            x_offset = (self.scaled_width - panel['width'] * self.scale_factor) / 2
+            panel['width'] = panel['height']
             y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
 
-            child_panel = Circle(x=self.x + x_offset, y=self.y + x_offset,
-                                 raw_params=panel, scale_factor=self.scale_factor,
-                                 draw_label=self.draw_label)
+            child_panel = QuarterCircle(x=self.x + y_offset, y=self.y + y_offset,
+                                        raw_params=panel, scale_factor=self.scale_factor,
+                                        draw_label=self.draw_label)
 
             self.child_labels.append(child_panel)
 
@@ -137,14 +154,10 @@ class Circle:
             radius = self.scaled_width / 2
 
             # draw panel
-            self.draw_circle(center_x=self.x + self.scaled_width / 2 + x_offset,
-                             center_y=self.y + self.scaled_height / 2 + y_offset,
-                             radius=radius,
-                             thickness=1,
-                             start_angle=0)
+            self.draw_quarter_circle(x=self.x + y_offset, y=self.y + y_offset, radius=self.scaled_height, thickness=1)
 
-            self.x = self.x + x_offset
-            self.y = self.y + x_offset
+            self.x = self.x + y_offset
+            self.y = self.y + y_offset
 
             if self.draw_label:
                 width_label_cords = {
@@ -165,9 +178,9 @@ class Circle:
                     "x2": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
                     "y2": self.y,
                     "x3": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
-                    "y3": self.y + self.scaled_height - x_offset,
+                    "y3": self.y + self.scaled_height,
                     "x4": self.x,
-                    "y4": self.y + self.scaled_height - x_offset
+                    "y4": self.y + self.scaled_height
                 }
                 height_label = ShapeLabel(panel=self, label_type='height', coordinates=height_label_cords)
                 width_label.draw()
