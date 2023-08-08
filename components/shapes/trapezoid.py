@@ -1,3 +1,5 @@
+import math
+
 import cairo
 
 from components.shapes.shape_label import ShapeLabel
@@ -127,10 +129,11 @@ class Trapezoid:
         if self.height > self.height_2:
             self.modify_heights()
 
-        # difference between frame height 1 and height 2 should be equal to panel's
-        height_2_offset = self.height - self.height_2
+        #  find the base angles created by the sides in top triangular part
+        # 0.001 is added to handle division by zero error
+        bottom_angle = math.atan((self.scaled_height - self.scaled_height_2) / self.scaled_width + 0.001)
 
-        # draw frame    
+        # draw frame
         self.draw_trapezoid(x=self.x, y=self.y, width=self.scaled_width, height=self.scaled_height,
                             height_2=self.scaled_height_2, thickness=2)
 
@@ -169,12 +172,10 @@ class Trapezoid:
 
             # add height 2 in panel params
             if 'height_2' not in panel.keys():
-                panel['height_2'] = panel['height'] - height_2_offset + 1
+                panel['height_2'] = panel['height'] - math.tan(bottom_angle) * panel['width']
 
             x_offset = (self.scaled_width - panel['width'] * self.scale_factor) / 2
-            y_offset = (self.scaled_height - panel['height'] * self.scale_factor) / 2
-
-            offset = min(x_offset, y_offset)
+            y_offset = (self.scaled_height_2 + self.scaled_height) / 2 * 0.05 / 2
 
             child_panel = Trapezoid(x=self.x + x_offset, y=self.y + y_offset,
                                     raw_params=panel, scale_factor=self.scale_factor,
