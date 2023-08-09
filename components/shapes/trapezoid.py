@@ -125,6 +125,10 @@ class Trapezoid:
         self.raw_params['height_2'] = smaller_height
 
     def draw_shape(self):
+        # if height 2 is zero, return false
+        if not self.height_2:
+            return False
+
         # in trapezoid, height 1 should always be greater than height 2
         if self.height > self.height_2:
             self.modify_heights()
