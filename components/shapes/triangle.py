@@ -121,9 +121,9 @@ class Triangle:
                 "x1": self.x,
                 "y1": self.y + self.scaled_height,
                 "x2": self.x,
-                "y2": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "y2": self.y + self.scaled_height + 3 * ShapeLabel.LABEL_SIDE_LENGTH,
                 "x3": self.x + self.scaled_width,
-                "y3": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "y3": self.y + self.scaled_height + 3 * ShapeLabel.LABEL_SIDE_LENGTH,
                 "x4": self.x + self.scaled_width,
                 "y4": self.y + self.scaled_height
             }
@@ -132,9 +132,9 @@ class Triangle:
             height_label_cords = {
                 "x1": self.x,
                 "y1": self.y,
-                "x2": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "x2": self.x - 3 * ShapeLabel.LABEL_SIDE_LENGTH,
                 "y2": self.y,
-                "x3": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
+                "x3": self.x - 3 * ShapeLabel.LABEL_SIDE_LENGTH,
                 "y3": self.y + self.scaled_height,
                 "x4": self.x,
                 "y4": self.y + self.scaled_height
@@ -159,7 +159,7 @@ class Triangle:
 
             offset = min(x_offset, y_offset)
             if self.direction == "left":
-                x_offset = 2 * offset
+                x_offset = self.scaled_width - panel['width'] * self.scale_factor - offset
             else:
                 x_offset = offset
 
@@ -178,19 +178,19 @@ class Triangle:
             self.draw_triangle(x=self.x + x_offset, y=self.y + offset, width=self.scaled_width,
                                height=self.scaled_height, thickness=1)
 
-            self.x = self.x + offset
+            self.x = self.x + x_offset
             self.y = self.y + offset
 
             if self.draw_label:
-                x1 = self.x + x_offset if self.direction == "left" else self.x
-                x3 = self.x + offset + self.scaled_width if self.direction == "left" else self.x + self.scaled_width
+                x1 = self.x
+                x3 = self.x + self.scaled_width if self.direction == "left" else self.x + self.scaled_width
                 width_label_cords = {
                     "x1": x1,
                     "y1": self.y + self.scaled_height,
                     "x2": x1,
-                    "y2": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
+                    "y2": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
                     "x3": x3,
-                    "y3": self.y + self.scaled_height + ShapeLabel.LABEL_SIDE_LENGTH,
+                    "y3": self.y + self.scaled_height + 2 * ShapeLabel.LABEL_SIDE_LENGTH,
                     "x4": x3,
                     "y4": self.y + self.scaled_height
                 }
@@ -199,9 +199,9 @@ class Triangle:
                 height_label_cords = {
                     "x1": self.x,
                     "y1": self.y,
-                    "x2": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
+                    "x2": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
                     "y2": self.y,
-                    "x3": self.x - ShapeLabel.LABEL_SIDE_LENGTH,
+                    "x3": self.x - 2 * ShapeLabel.LABEL_SIDE_LENGTH,
                     "y3": self.y + self.scaled_height,
                     "x4": self.x,
                     "y4": self.y + self.scaled_height
